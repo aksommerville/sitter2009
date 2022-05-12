@@ -1,0 +1,15 @@
+class        HelicopterSprite
+width        32
+height       16
+groups       all vis upd solid
+collision    edge grid sprites
+neverflop
+
+face helicopt # it's a verb, dammit
+  helicopter/item1-0.png 4
+  helicopter/item1-1.png 4
+  helicopter/item1-2.png 4
+  helicopter/item1-3.png 4
+  helicopter/item1-2.png 4
+  helicopter/item1-1.png 4
+endface

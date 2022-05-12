@@ -1,0 +1,13 @@
+class        TeleporterRecSprite
+width        32
+height       16
+groups       all vis upd solid carry
+collision    edge grid sprite
+sprid        teleporterrec
+pushable
+gravity
+neverflop
+
+face idle
+  teleporter/recbase.png 1000
+endface

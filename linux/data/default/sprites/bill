@@ -1,0 +1,64 @@
+class         PlayerSprite
+width         32
+height        48
+groups        all upd vis quarry carry solid crushable slicable
+pushable
+collision     edge grid sprites
+gravity
+
+face idle
+  bill/idle.png 100 300
+  bill/blink.png 10
+endface
+
+face cidle
+  bill/cidle.png 100 300
+  bill/cblink.png 10
+endface
+
+face walk
+  bill/walk-0.png 7
+  bill/walk-1.png 7
+  bill/walk-0.png 7
+  bill/idle.png   7
+endface
+
+face cwalk
+  bill/cwalk-0.png 7
+  bill/cwalk-1.png 7
+  bill/cwalk-0.png 7
+  bill/cidle.png   7
+endface
+
+face duck
+  bill/duck.png 1000
+endface
+
+face impalel
+  bill/impalel.png 1000
+endface
+
+face impaler
+  bill/impaler.png 1000
+endface
+
+face impaleu
+  bill/impaleu.png 1000
+endface
+
+face impaled
+  bill/impaled.png 1000
+endface
+
+face splatter
+  splatter-0.png 8
+  splatter-1.png 8
+  splatter-2.png 8
+  splatter-3.png 8
+  splatter-4.png 8
+  goto mound-o-guts
+endface
+
+face mound-o-guts
+  splatter-4.png 1000
+endface

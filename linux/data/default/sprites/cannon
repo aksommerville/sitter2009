@@ -1,0 +1,14 @@
+class            CannonSprite
+width            64
+height           64
+groups           all vis upd solid
+sprid            cannon
+
+face idle
+  cannon/base-idle.png 1000
+endface
+
+face active
+  cannon/base-active-0.png 10
+  cannon/base-active-1.png 10
+endface

@@ -1,0 +1,12 @@
+class         Sprite
+width         32
+height        32
+groups        all upd vis carry solid
+collision     grid edges sprites
+pushable
+gravity
+sprid         tuxdoll
+
+face idle
+  tuxdoll.png 1000
+endface

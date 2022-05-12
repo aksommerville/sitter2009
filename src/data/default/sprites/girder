@@ -1,0 +1,11 @@
+class          Sprite
+width          128
+height         16
+groups         all vis upd carry solid
+pushable
+gravity
+collision      edge sprites grid
+
+face idle
+  girder.png 1000
+endface

@@ -1,0 +1,154 @@
+Sitter
+Version 1.0, 21 December 2009
+By Andy Sommerville, aksommerville at g mail dot com
+
+-------------------------------------------------------------------------------
+
+This file is included with all source and binary distributions. Therefore a lot
+of it may be irrelevant for your distribution.
+
+-------------------------------------------------------------------------------
+
+LICENSE
+
+Sitter is licensed under GNU GPL 3.0. See the enclosed LICENSE file for precise
+terms. (it can be had from http://www.gnu.org/, if it's missing here).
+In a nutshell:
+  - You can use, modify, and redistribute Sitter any way you like.
+  - Modified versions must be clearly marked as such: don't take credit for my
+    work, and don't give me credit for yours.
+  - Any work derived from Sitter must be licensed under similar terms.
+  
+-------------------------------------------------------------------------------
+
+INSTALLATION
+
+Linux users can run the INSTALL script. Run "./INSTALL -u" to uninstall. 
+You'll need to be root, eg "sudo ./INSTALL" in Debian.
+No special installation for Windows, but the working directory must be the same
+as the executable's location.
+For wii, copy this whole directory to your SD card at "/apps/sitter". (to
+launch from the Homebrew Channel).
+
+-------------------------------------------------------------------------------
+
+DEFAULT CONTROLS -- linux,win32
+
+In the menus:
+  arrows        change selection
+  space,enter   choose
+  escape        cancel
+  left-shift    change selection faster
+  
+In the game, keyboard:
+  left,right    player 1 walk
+  up            player 1 jump
+  down          player 1 duck
+  space         player 1 pickup,toss
+  escape        pause
+  
+In the game, joysticks:
+  axis 0        walk
+  axis 1        jump,duck
+  button 0      pickup,toss
+  
+Joysticks are assigned to players in the order SDL reports them.
+I recommend changing the player inputs the first time you run Sitter: 
+  from the main menu: Settings/Input/Set Player ...
+These changes will be saved automatically.
+For the time being, the only way to change menu controls is with the "Advanced"
+input setup, or editing the config file by hand.
+
+-------------------------------------------------------------------------------
+
+DEFAULT CONTROLS -- wii
+
+GameCube joysticks:
+  d-pad     menu selection, player walk
+  A         menu choose, player jump
+  B         menu cancel, player pickup,toss
+  X         player focus,unfocus
+  Y         show,hide radar
+  start     pause
+  
+Wiimotes:
+  d-pad     menu selection, player walk (horizontal orientation, hold it like an NES joystick)
+  2         menu choose, player jump
+  1         menu cancel, player pickup,toss
+  +         player focus,unfocus
+  -         show,hide radar
+  home      pause
+  
+By default, devices are assigned in parallel. That is, GameCube joystick 1 and Wiimote 1
+both control Player 1.
+Device-to-player mappings may be set in the Input Settings menu, and will be saved
+between runs.
+Devices becoming disconnected, or reported by libogc in the wrong order may cause
+problems. I haven't really investigated that yet.
+Button mappings are not changeable for the time being. (if you have the source code,
+you can change the mappings in src/input/sitter_InputManager_wii.cpp, towards the bottom).
+
+-------------------------------------------------------------------------------
+
+CONFIGURATION FILE
+
+The most common operations can be performed live inside Sitter. Sometimes you may need
+to edit the config file. This file is overwritten every time Sitter quits, comments
+will not be preserved and some formatting may change.
+
+All configuration options may be given on the command line as "--KEY=VALUE" or "--KEY"
+or "--no-KEY" for boolean keys. Some options also have a command line flag, eg "-f"
+for fullscreen or "-^f" for no fullscreen.
+
+In this table, "ARCH" is the architecture for which the key is relevant:
+  l = linux
+  i = wii
+  w = windows
+  
+TYPE "list" means a self-describing list -- the first character is the separator.
+
+KEY           FLAG TYPE      ARCH DEFAULT   DESCRIPTION
+fullscreen    f    boolean   lw   0         begin in fullscreen mode
+fswidth            integer   lwi  800[5]    width in fullscreen, for wii width of virtual screen, may be zero
+fsheight           integer   lwi  600[5]    height in fullscreen, for wii height of virtual screen, may be zero
+fssmart            boolean   lw   1         check fswidth,fsheight before initialising (strongly recommend true)
+winwidth           integer   lw   800       width not fullscreen
+winheight          integer   lw   576       height not fullscreen
+wii-overscan-x     integer   i    0         ignore so many columns of screen
+wii-overscan-y     integer   i    30        ignore so many rows of screen
+tex-filter         integer   lwi  0         linear texture filter, 0=auto 1=never 2=always
+resprefix          path      lwi  [1]       location of "data" directory, must end with slash
+dataset            path      lwi  default/  data set, under resprefix, must end with slash
+gfxpfx             path      lwi  graphics/ location of graphics files, under resprefix/dataset, must end with slash
+gridpfx            path      lwi  grids/    " grids (level layouts)
+sfxpfx             path      lwi  sounds/   " sound effects -- raw signed 16-bit little-endian PCM
+bgmpfx             path      lwi  music/    " music -- our own goofy format
+sprpfx             path      lwi  sprites/  " sprites (control data, not graphics)
+audio         A    boolean   lwi  1[wii=0]  master audio enable. if false, the hardware is never turned on.
+sound         s    boolean   lwi  1         enable sound effects, irrelevant if audio=0
+music         m    boolean   lwi  1[wii=0]  enable background music, irrelevant if audio=0 -- on wii this will crash!
+autosave      a    boolean   lwi  1         write configuration file at quit
+autosave-file      string    lwi  [2]       where to write configuration (preferably somewhere we will look for it, reading...?)
+highscore-file     string    lwi  [3]       where to store high scores
+highscore-limit    integer   lwi  10        how many scores to keep for each level
+ptint1             integer   lwi  x00000000 player 1 tint (RGBA, A is amount of tinting)
+ptint2             integer   lwi  xff000040 " 2
+ptint3             integer   lwi  x00ff0040 " 3
+ptint4             integer   lwi  x0000ff40 " 4
+debug-goals   G    boolean   lwi  0         (debug) tint sprites when they are on a goal
+rabbit_mode   R    boolean   lwi  0         (debug) used briefly during debugging, and it's so entertaining I kept it
+keymap             list      lw   [4]       mapping of keyboard events
+joymap             list      lw   [4]       mapping of joystick events, when joystick is unknown
+joymapN            list      lw             mapping for joystick number N, starting at 0 (overrides "joymap")
+joymap-NAME        list      lw             mapping for joystick with given NAME, as reported by SDL (overrides "joymap" and "joymapN")
+gcpadmap           list      i    ,1,2,3,4  player id for each gamecube joystick (0 permitted)
+wiimotemap         list      i    ,1,2,3,4  player id for each wiimote (0 permitted)
+
+[1] resprefix is defined in Makefile. For Windows "data/", for Wii "sd0:/apps/sitter/data/",
+    for Linux the absolute path of the data directory.
+[2] autosave-file is defined in Makefile. For Windows "sitter.cfg", for Wii "sd0:/apps/sitter/sitter.cfg",
+    for Linux "~/.sitter/sitter.cfg"
+[3] highscore-file is defined in Makefile. For Windows "sitter.highscore", for Wii "sd0:/apps/sitter/sitter.highscore",
+    for Linux "~/.sitter/sitter.highscore"
+[4] see "DEFAULT CONTROLS"
+[5] fswidth and fsheight for Wii default to 0,0. This means use the physical screen size.

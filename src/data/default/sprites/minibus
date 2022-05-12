@@ -1,0 +1,11 @@
+class       Sprite
+width       128
+height      96
+groups      all vis upd carry solid
+pushable
+gravity
+collision   edge grid sprites
+
+face idle
+  minibus.png 1000
+endface

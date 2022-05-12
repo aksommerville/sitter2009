@@ -1,0 +1,11 @@
+class         Sprite
+width         24
+height        48
+groups        all vis upd carry solid
+collisions    edge grid sprite
+pushable
+gravity
+
+face idle
+  presents/24_48_1.png 1000
+endface

@@ -1,0 +1,13 @@
+class       CannonButtonSprite
+width       32
+height      24
+groups      all upd vis solid
+sprid       cbtn-clk
+
+face off
+  cannon/btn-clk-off.png 1000
+endface
+
+face on
+  cannon/btn-clk-on.png 1000
+endface

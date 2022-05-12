@@ -1,0 +1,12 @@
+class Sprite
+width 32
+height 32
+groups all vis upd solid carry
+gravity
+pushable
+neverflop
+collision grid sprites edge
+
+face idle
+  beans.png 1000
+endface

@@ -1,0 +1,11 @@
+class        HHelicopterSprite
+width        96
+height       16
+groups       all vis upd solid
+collision    edge grid sprites
+
+face helicopt
+  helicopter/item2-0.png 5
+  helicopter/item2-1.png 5
+  helicopter/item2-2.png 5
+endface

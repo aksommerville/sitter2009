@@ -1,0 +1,66 @@
+#!/bin/bash
+
+if [ "$1" == "-u" ] ; then #--------------- uninstall -------------------------
+
+if [ "$SITTER_DST" == "" ] ; then
+  read -p "Installed location: [/usr/share/sitter] " SITTER_DST || exit 1
+  if [ "$SITTER_DST" == "" ] ; then
+    SITTER_DST=/usr/share/sitter
+  fi
+fi
+
+read -p "Ready to remove $SITTER_DST, /usr/games/sitter, and ~/.sitter. Last chance to abort." DUMMY || exit 1
+
+if [ -d "$SITTER_DST" ] ; then
+  rm -rf "$SITTER_DST" || exit 1
+fi
+if [ -h /usr/games/sitter ] ; then
+  rm -f /usr/games/sitter || exit 1
+fi
+if [ -d ~/.sitter ] ; then
+  rm -r ~/.sitter || exit 1
+fi
+
+echo "Sitter uninstalled. Have a nice day. As if that's even possible, now. :("
+
+else #-------------------------------------- install --------------------------
+
+if [ "$(id -u)" != "0" ] ; then
+  if [ -n "which sudo" ] ; then
+    echo "If this fails, try 'sudo $0'."
+  else
+    echo "If this fails, try again as root."
+  fi
+fi
+
+SRC_BIN="$(dirname $0)/sitter"
+SRC_DATA="$(dirname $0)/data"
+
+if [ "$SITTER_DST" == "" ] ; then
+  read -p "Destination: [/usr/share/sitter] " SITTER_DST || exit 1
+  if [ "$SITTER_DST" == "" ] ; then 
+    SITTER_DST=/usr/share/sitter
+  fi
+fi
+mkdir -p "$SITTER_DST" || exit 1
+
+cp -r "$SRC_DATA" "$SITTER_DST" || exit 1
+cp "$SRC_BIN" "$SITTER_DST" || exit 1
+
+if [ ! -d ~/.sitter ] ; then
+  mkdir ~/.sitter || exit 1
+fi
+if [ -f ~/.sitter/sitter.cfg ] && [ -n "$(grep '^resprefix=' ~/.sitter/sitter.cfg)" ] ; then
+  sed -i 's/^resprefix=.*$/resprefix='"$SITTER_DST/data/"'/' ~/.sitter/sitter.cfg
+else
+  echo "resprefix=$SITTER_DST/data/" >> ~/.sitter/sitter.cfg
+fi
+
+chmod o+rwx ~/.sitter
+chmod o+rw ~/.sitter/*
+ln -s $SITTER_DST/sitter /usr/games/sitter || exit 1
+
+echo "Sucessfully installed Sitter at $SITTER_DST, and made a symlink at /usr/games/sitter."
+echo "Now just enter 'sitter' to play."
+
+fi

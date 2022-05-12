@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<app version="1">
+<name>Sitter</name>
+<coder>Andy Sommerville</coder>
+<version>20091213</version>
+<short_description>Don't kill the children</short_description>
+<long_description>
+  Carry the children to the goal without killing any of them.
+</long_description>
+</app>
