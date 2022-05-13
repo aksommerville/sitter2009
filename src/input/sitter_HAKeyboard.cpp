@@ -25,10 +25,11 @@ HAKeyboard::HAKeyboard(Game *game):game(game) {
   stickyshiftstate=-1;
   
   // TODO we should be smarter about positioning:
-  bounds.w=(game->video->getScreenWidth()*4)/5; // 4/5 of screen? arbitrary
-  bounds.h=game->video->getScreenHeight()/2; // half of screen? arbitrary
-  bounds.centerx(game->video->getScreenWidth()>>1);
-  bounds.bottom(game->video->getScreenHeight()-50); // 50 from bottom, totally arbitrary
+  Rect screenbounds=game->video->getBounds();
+  bounds.w=(screenbounds.w*4)/5; // 4/5 of screen? arbitrary
+  bounds.h=screenbounds.h/2; // half of screen? arbitrary
+  bounds.centerx(screenbounds.x+(screenbounds.w>>1));
+  bounds.bottom(screenbounds.y+screenbounds.h-50); // 50 from bottom, totally arbitrary
   
   setup_QWERTY();
   

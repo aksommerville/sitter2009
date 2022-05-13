@@ -78,9 +78,25 @@ public:
   void reconfigure();
   
   #ifdef SITTER_LINUX_DRM
-    int getScreenWidth() const { return sitter_drm_get_width(drm); }
-    int getScreenHeight() const { return sitter_drm_get_height(drm); }
-    Rect getBounds() const { return Rect(sitter_drm_get_width(drm),sitter_drm_get_height(drm)); }
+    #define SITTER_W_LIMIT 800
+    #define SITTER_H_LIMIT 600
+    int getScreenWidth() const {
+      int realw=sitter_drm_get_width(drm);
+      if (realw<SITTER_W_LIMIT) return realw;
+      return SITTER_W_LIMIT;
+    }
+    int getScreenHeight() const {
+      int realh=sitter_drm_get_height(drm);
+      if (realh<SITTER_H_LIMIT) return realh;
+      return SITTER_H_LIMIT;
+    }
+    Rect getBounds() const {
+      int realw=sitter_drm_get_width(drm);
+      int realh=sitter_drm_get_height(drm);
+      int w=(realw>=SITTER_W_LIMIT)?SITTER_W_LIMIT:realw;
+      int h=(realh>=SITTER_H_LIMIT)?SITTER_H_LIMIT:realh;
+      return Rect((realw>>1)-(w>>1),(realh>>1)-(h>>1),w,h);
+    }
   #else
     int getScreenWidth() const { return screen->w; }
     int getScreenHeight() const { return screen->h; }

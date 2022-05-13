@@ -148,7 +148,6 @@ VideoManager::~VideoManager() {
 }
 
 void VideoManager::reconfigure() {
-  fprintf(stderr,"%s\n",__func__);
   #if !defined(SITTER_LINUX_DRM) //TODO i think this is not needed? check call sites
   int w=game->cfg->getOption_int("winwidth");
   int h=game->cfg->getOption_int("winheight");
@@ -195,7 +194,9 @@ void VideoManager::reconfigure() {
 void VideoManager::pushMenu(Menu *menu) {
   if (menuc>=menua) {
     menua+=MENUV_INCREMENT;
-    if (!(menuv=(Menu**)realloc(menuv,sizeof(void*)*menua))) sitter_throw(AllocationError,"");
+    Menu **nv=(Menu**)realloc(menuv,sizeof(void*)*menua);
+    if (!nv) sitter_throw(AllocationError,"");
+    menuv=nv;
   }
   menuv[menuc++]=menu;
 }
@@ -405,28 +406,26 @@ void VideoManager::drawRadar() {
  *****************************************************************************/
  
 void VideoManager::drawHighScores() {
-  int screenw=getScreenWidth();
-  int screenh=getScreenHeight();
+  Rect bounds=getBounds();
   if (highscore_dirty) {
     game->hisc->format(highscore_format_buffer,SITTER_HIGHSCORE_FORMAT_BUFFER_LEN,game->grid_set,
       game->grid_index,game->lvlplayerc,game->hsresult-1);
     highscore_dirty=false;
   }
-  int top=0;
+  int top=bounds.y;
   for (int i=0;i<menuc;i++) if (menuv[i]->y+menuv[i]->h+10>top) top=menuv[i]->y+menuv[i]->h+10;
-  drawBoundedString(0,top,screenw,screenh-top,highscore_format_buffer,game->hsfonttexid,0xffffffff,12,16,true,false);
+  drawBoundedString(bounds.x,top,bounds.w,bounds.h-top,highscore_format_buffer,game->hsfonttexid,0xffffffff,12,16,true,false);
 }
 
 void VideoManager::drawBlotter(uint32_t rgba) {
-  int screenw=getScreenWidth();
-  int screenh=getScreenHeight();
+  Rect bounds=getBounds();
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
     glColor4ub(rgba>>24,rgba>>16,rgba>>8,rgba);
-    glVertex2i(0,0);
-    glVertex2i(0,screenh);
-    glVertex2i(screenw,screenh);
-    glVertex2i(screenw,0);
+    glVertex2i(bounds.x,bounds.y);
+    glVertex2i(bounds.x,bounds.y+bounds.h);
+    glVertex2i(bounds.x+bounds.w,bounds.y+bounds.h);
+    glVertex2i(bounds.x+bounds.w,bounds.y);
   glEnd();
   glEnable(GL_TEXTURE_2D);
 }
@@ -437,20 +436,21 @@ void VideoManager::drawBlotter(uint32_t rgba) {
   
 void VideoManager::drawGrid(Grid *grid) {
   if (!grid||!grid->cellv) return;
-  int screenw=getScreenWidth();
-  int screenh=getScreenHeight();
+  Rect bounds=getBounds();
+  glScissor(bounds.x,bounds.y,bounds.w,bounds.h);
+  glEnable(GL_SCISSOR_TEST);
   /* background */
   int worldw=grid->colc*grid->colw;
   int worldh=grid->rowc*grid->rowh;
-  int blotterleft=0,blottertop=0,blotterright=screenw,blotterbottom=screenh;
-  if ((worldw<screenw)||(worldh<screenh)) { // grid smaller than screen on at least one axis
+  int blotterleft=bounds.x,blottertop=bounds.y,blotterright=bounds.x+bounds.w,blotterbottom=bounds.y+bounds.h;
+  if ((worldw<bounds.w)||(worldh<bounds.h)) { // grid smaller than screen on at least one axis
     drawBlotter(0x00000000);
-    if (worldw<screenw) {
-      blotterleft=(screenw>>1)-(worldw>>1);
+    if (worldw<bounds.w) {
+      blotterleft=bounds.x+(bounds.w>>1)-(worldw>>1);
       blotterright=blotterleft+worldw;
     }
-    if (worldh<screenh) {
-      blottertop=(screenh>>1)-(worldh>>1);
+    if (worldh<bounds.h) {
+      blottertop=bounds.y+(bounds.h>>1)-(worldh>>1);
       blotterbottom=blottertop+worldh;
     }
   }
@@ -478,21 +478,21 @@ void VideoManager::drawGrid(Grid *grid) {
   // cx,cy,cw,ch: visible boundaries in cell coordinates
   int cx=grid->scrollx/grid->colw;
   int cy=grid->scrolly/grid->rowh;
-  int cw=(screenw+grid->colw-1)/grid->colw+1;
-  int ch=(screenh+grid->rowh-1)/grid->rowh+1;
+  int cw=(bounds.w+grid->colw-1)/grid->colw+1;
+  int ch=(bounds.h+grid->rowh-1)/grid->rowh+1;
   int xshift=-grid->scrollx%grid->colw;
   int yshift=-grid->scrolly%grid->rowh;
   for (int row=0;row<ch;row++) {
     int arow=cy+row;
     if ((arow<0)||(arow>=grid->rowc)) continue;
       // left,top,right,bottom: rendering boundaries of 1 cell
-    int top=yshift+row*grid->rowh;
+    int top=bounds.y+yshift+row*grid->rowh;
     int bottom=top+grid->rowh;
     uint8_t *rowcellv=grid->cellv+arow*grid->colc;
     for (int col=0;col<cw;col++) {
       int acol=cx+col;
       if ((acol<0)||(acol>=grid->colc)) continue;
-      int left=xshift+col*grid->colw;
+      int left=bounds.x+xshift+col*grid->colw;
       int right=left+grid->colw;
       if (grid->tidv[rowcellv[acol]]<0) continue;
       glBindTexture(GL_TEXTURE_2D,grid->tidv[rowcellv[acol]]);
@@ -505,6 +505,7 @@ void VideoManager::drawGrid(Grid *grid) {
       glEnd();
     }
   }
+  glDisable(GL_SCISSOR_TEST);
 }
 
 /******************************************************************************
@@ -513,6 +514,9 @@ void VideoManager::drawGrid(Grid *grid) {
 
 void VideoManager::drawSprites(SpriteGroup *grp) {
   if (!grp->sprc) return;
+  Rect bounds=getBounds();
+  glScissor(bounds.x,bounds.y,bounds.w,bounds.h);
+  glEnable(GL_SCISSOR_TEST);
   /* set up TEV for texture+tint+opacity */
   glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_COMBINE);
   glTexEnvi(GL_TEXTURE_ENV,GL_COMBINE_RGB,GL_INTERPOLATE);
@@ -535,7 +539,7 @@ void VideoManager::drawSprites(SpriteGroup *grp) {
     glPushMatrix();
     float halfw=spr->r.w/2.0f;
     float halfh=spr->r.h/2.0f;
-    glTranslatef(spr->r.x-grp->scrollx+halfw,spr->r.y-grp->scrolly+halfh,0.0f);
+    glTranslatef(bounds.x+spr->r.x-grp->scrollx+halfw,bounds.y+spr->r.y-grp->scrolly+halfh,0.0f);
     glRotatef(spr->rotation,0,0,1);
     bool flop=(spr->neverflop?false:spr->flop);
     glBegin(GL_QUADS);
@@ -560,6 +564,7 @@ void VideoManager::drawSprites(SpriteGroup *grp) {
   }
   /* reset TEV */
   glTexEnvi(GL_TEXTURE_ENV,GL_TEXTURE_ENV_MODE,GL_MODULATE);
+  glDisable(GL_SCISSOR_TEST);
 }
 
 /******************************************************************************
@@ -567,6 +572,7 @@ void VideoManager::drawSprites(SpriteGroup *grp) {
  *****************************************************************************/
 
 void VideoManager::drawControl() {
+  Rect bounds=getBounds();
 
   /* clock */
   int seconds=game->play_clock/60; // 60 fps (if we don't hit the target rate, play clock is game time, not real time)
@@ -574,11 +580,11 @@ void VideoManager::drawControl() {
   char timestr[15];
   snprintf(timestr,15,"%d:%02d",minutes,seconds);
   timestr[14]=0;
-  drawString(10,10,timestr,game->clocktexid,0xffffffc0,12,16);
+  drawString(bounds.x+10,bounds.y+10,timestr,game->clocktexid,0xffffffc0,12,16);
   
   /* murder counter */
   if (game->murderc||(game->grid&&game->grid->murderlimit)) {
-    int x=10,y=31;
+    int x=bounds.x+10,y=bounds.y+31;
     int skulli=0;
     #define SKULLW 16
     #define SKULLH 16
@@ -854,6 +860,9 @@ void VideoManager::drawScrollBar(int texid,int x,int y,int w,int h,int btnh,int 
   bool fake=false;
   if (glIsTexture(texid)) glBindTexture(GL_TEXTURE_2D,texid);
   else { fake=true; glDisable(GL_TEXTURE_2D); }
+  Rect bounds=getBounds();
+  x+=bounds.x;
+  y+=bounds.y;
   int bottom=y+h;
   int upbtnbottom=y+btnh;
   int downbtntop=y+h-btnh;

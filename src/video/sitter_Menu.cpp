@@ -247,9 +247,10 @@ void Menu::addItem(MenuItem *item) {
 }
 
 void Menu::pack(bool reselect) {
+  Rect screenbounds=game->video->getBounds();
   int minitemw=scrollbarw+50; // 50=arbitrary, could be zero
-  int hlimit=(game->video->getScreenHeight()*4)/5; // 80% of screen (arbitrary)
-  int wlimit=(game->video->getScreenWidth()*4)/5; // 80% of screen (arbitrary)
+  int hlimit=(screenbounds.h*4)/5; // 80% of screen (arbitrary)
+  int wlimit=(screenbounds.w*4)/5; // 80% of screen (arbitrary)
   w=(edgew<<1)+indicatorw+itemiconw+(itemiconpad<<1);
   h=(edgeh<<1)+titlechh+titlepad;
   int titlew=0;
@@ -270,9 +271,9 @@ void Menu::pack(bool reselect) {
   if (longitemw>titlew) w+=longitemw; else w+=titlew;
   if (w>wlimit) w=wlimit;
   if (h>hlimit) h=hlimit;
-  x=(game->video->getScreenWidth()>>1)-(w>>1);
-  if (game->drawhighscores) y=10;
-  else y=(game->video->getScreenHeight()>>1)-(h>>1);
+  x=screenbounds.x+(screenbounds.w>>1)-(w>>1);
+  if (game->drawhighscores) y=screenbounds.y+10;
+  else y=screenbounds.y+(screenbounds.h>>1)-(h>>1);
 }
 
 /******************************************************************************
