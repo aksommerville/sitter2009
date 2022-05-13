@@ -1,5 +1,7 @@
-#ifndef SITTER_WII
+#if !defined(SITTER_WII)
 
+#include <cstring>
+#include <cstdlib>
 #include <malloc.h>
 #include "sitter_Error.h"
 #include "sitter_string.h"
@@ -23,6 +25,10 @@ InputManager::InputManager(Game *game,int evtqlen):game(game) {
   mousex=mousey=-1;
   SDL_EnableUNICODE(1);
   never_remap_keys=false;
+  
+  #if SITTER_LINUX_DRM
+    sitter_evdev_set_InputManager(this);
+  #endif
   
   /* joysticks */
   if (SDL_Init(SDL_INIT_JOYSTICK)) {
@@ -262,7 +268,7 @@ const char *InputManager::mappingSourceToString(int mapid) const {
           case SDLK_LMETA: return "lmeta";
           case SDLK_RMETA: return "rmeta";
         }
-        char *kname=SDL_GetKeyName(mapv[mapid].src.key.keysym.sym);
+        const char *kname=SDL_GetKeyName(mapv[mapid].src.key.keysym.sym);
         if (!kname) goto wheres_the_beef;
         return kname;
       } break;
@@ -808,6 +814,8 @@ void InputManager::receiveSDLEvent(const SDL_Event *evt) {
 }
  
 void InputManager::update() {
+
+  //NOTE: When evdev in play, it always returns zero from SDL_PollEvent, and populates our queue on its own.
 
   /* SDL event loop */
   SDL_Event evt; while (SDL_PollEvent(&evt)) switch (evt.type) {

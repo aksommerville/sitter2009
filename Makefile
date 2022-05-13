@@ -1,5 +1,5 @@
 ifeq ($(MAKECMDGOALS),clean)
-  clean:;@rm -rf bin linux wii win32
+  clean:;@rm -rf bin linuxsdl linuxdrm wii win32
 else
 
 SRCDIR:=src
@@ -21,26 +21,42 @@ IMAGE_CONVERTER:=$(BINDIR)/imgcvt
 IMAGE_CONVERTER_SOURCE:=$(SRCDIR)/sitter_image_converter.cpp
 
 #ARCHS:=linux wii win32
-ARCHS:=linux
+ARCHS:=linuxsdl linuxdrm
 all:processed_data_files $(addprefix arch_,$(ARCHS))
 
 ###############################################################################
 # architecture targets
 
-# linux, generic. my system happens to be amd64, so that's what it makes
-DST_linux:=linux
-APP_linux:=$(DST_linux)/sitter
-DATADIR_linux:=$(DST_linux)/data
-CXX_linux:=g++
-CXXFLAGS_linux:=$(CXXFLAGS_all) -DSITTER_LINUX -DSITTER_LITTLE_ENDIAN \
+# linux, with libsdl
+DST_linuxsdl:=linuxsdl
+APP_linuxsdl:=$(DST_linuxsdl)/sitter
+DATADIR_linuxsdl:=$(DST_linuxsdl)/data
+CXX_linuxsdl:=g++
+CXXFLAGS_linuxsdl:=$(CXXFLAGS_all) -DSITTER_LINUX -DSITTER_LITTLE_ENDIAN \
                 -DSITTER_CFG_PREARGV=\":~/.sitter/sitter.cfg\" \
                 -DSITTER_CFG_DEST=\"~/.sitter/sitter.cfg\" \
-                -DSITTER_DATA_DIR=\"$(abspath $(DATADIR_linux))/\" \
+                -DSITTER_DATA_DIR=\"$(abspath $(DATADIR_linuxsdl))/\" \
                 -DSITTER_HIGHSCORE_FILE=\"~/.sitter/sitter.highscore\"
-LDFLAGS_linux:=
-LDLIBS_linux:=-lSDL -lGL -lz
-APPEXTRA_linux:=LICENSE README INSTALL
-$(DATADIR_linux)/%:$(BINDATADIR)/%|all_data_dirs;@cp $< $@
+LDFLAGS_linuxsdl:=
+LDLIBS_linuxsdl:=-lSDL -lGL -lz
+APPEXTRA_linuxsdl:=LICENSE README INSTALL
+$(DATADIR_linuxsdl)/%:$(BINDATADIR)/%|all_data_dirs;@cp $< $@
+
+# linux, with libdrm, alsa, and evdev, for systems with no window manager
+DST_linuxdrm:=linuxdrm
+APP_linuxdrm:=$(DST_linuxdrm)/sitter
+DATADIR_linuxdrm:=$(DST_linuxdrm)/data
+CXX_linuxdrm:=g++
+CXXFLAGS_linuxdrm:=$(CXXFLAGS_all) -DSITTER_LINUX_DRM -DSITTER_LITTLE_ENDIAN \
+                -DSITTER_CFG_PREARGV=\":~/.sitter/sitter.cfg\" \
+                -DSITTER_CFG_DEST=\"~/.sitter/sitter.cfg\" \
+                -DSITTER_DATA_DIR=\"$(abspath $(DATADIR_linuxdrm))/\" \
+                -DSITTER_HIGHSCORE_FILE=\"~/.sitter/sitter.highscore\" \
+                -I/usr/include/libdrm
+LDFLAGS_linuxdrm:=
+LDLIBS_linuxdrm:=-ldrm -lEGL -lgbm -lGL -lasound -lpthread -lz
+APPEXTRA_linuxdrm:=LICENSE README INSTALL
+$(DATADIR_linuxdrm)/%:$(BINDATADIR)/%|all_data_dirs;@cp $< $@
 
 # windows. only useful if you're building from linux with GCC for i586-mingw32msvc (ubuntu provides this)
 DST_win32:=win32
@@ -148,7 +164,11 @@ $(DATARULES):$(SRCDATAFILES) $(IMAGE_CONVERTER);@echo $(DATARULES) ; \
 # per-architecture rules
 
 define ARCH_RULES # $1=arch
-  OBJFILES_$1:=$(patsubst $(SRCDIR)/%.cpp,$(BINDIR)/%.$1.o,$(SRCCODEFILES))
+  ifeq ($1,linuxdrm)
+    OBJFILES_$1:=$(patsubst $(SRCDIR)/%.cpp,$(BINDIR)/%.$1.o,$(SRCCODEFILES))
+  else
+    OBJFILES_$1:=$(patsubst $(SRCDIR)/%.cpp,$(BINDIR)/%.$1.o,$(filter-out src/drm_alsa_evdev/%,$(SRCCODEFILES)))
+  endif
   $(APP_$1):$$(OBJFILES_$1)|$(dir $(APP_$1));@echo $(APP_$1) ; \
     $(CXX_$1) $(LDFLAGS_$1) -o $(APP_$1) $$(OBJFILES_$1) $(LDLIBS_$1)
   $(BINDIR)/%.$1.o:$(SRCDIR)/%.cpp|bindirs;@echo $$@ ; \
@@ -165,7 +185,7 @@ $(foreach A,$(ARCHS),$(eval $(call ARCH_RULES,$A)))
 # image converter
 
 IMAGE_CONVERTER_OBJ:=$(patsubst $(SRCDIR)%.cpp,$(BINDIR)%.o,$(IMAGE_CONVERTER_SOURCE))
-SITTEROBJ:=$(filter-out $(BINDIR)/sitter_main.linux.o,$(OBJFILES_linux))
+SITTEROBJ:=$(filter-out $(BINDIR)/sitter_main.linuxsdl.o,$(OBJFILES_linuxsdl))
 $(BINDIR)/%.o:$(SRCDIR)/%.cpp|$(BINDIR);@echo $@ ; g++ -c -MMD -O2 $(SRCINCLUDE) -o $@ $< -DSITTER_LITTLE_ENDIAN
 $(IMAGE_CONVERTER):$(IMAGE_CONVERTER_OBJ) $(SITTEROBJ) |$(dir $(IMAGE_CONVERTER));@echo $(IMAGE_CONVERTER) ; \
   g++ -o $(IMAGE_CONVERTER) $(IMAGE_CONVERTER_OBJ) $(SITTEROBJ) -lSDL -lGL -lz
@@ -188,7 +208,7 @@ bindirs:$(MKDIRS_OUT)
 # dist
 
 DIST_TAG:=$(shell date +'%Y%m%d')
-dist:arch_linux arch_wii arch_win32;@ \
+dist:arch_linuxsdl arch_linuxdrm arch_wii arch_win32;@ \
   if [ -d $(PKGDIR)/$(DIST_TAG) ] ; then \
     TAG=$(DIST_TAG)-$$(date +'%s') ; \
   else TAG=$(DIST_TAG) ; fi ; \
@@ -199,8 +219,12 @@ dist:arch_linux arch_wii arch_win32;@ \
   cp -r $(SRCDIR) Makefile $(SRCEXTRADIR)/LICENSE $(SRCEXTRADIR)/README $$UNIT || exit 1 ; \
   tar -cjf $$UNIT.tar.bz2 $$UNIT && rm -r $$UNIT || exit 1 ; \
   \
-  UNIT="$(PKGDIR)/$$TAG/sitter-linux-amd64-$$TAG" ; \
-  cp -r $(DST_linux) $$UNIT || exit 1; \
+  UNIT="$(PKGDIR)/$$TAG/sitter-linuxsdl-amd64-$$TAG" ; \
+  cp -r $(DST_linuxsdl) $$UNIT || exit 1; \
+  tar -cjf $$UNIT.tar.bz2 $$UNIT && rm -r $$UNIT || exit 1 ; \
+  \
+  UNIT="$(PKGDIR)/$$TAG/sitter-linuxdrm-$$TAG" ; \
+  cp -r $(DST_linuxdrm) $$UNIT || exit 1; \
   tar -cjf $$UNIT.tar.bz2 $$UNIT && rm -r $$UNIT || exit 1 ; \
   \
   UNIT="$(PKGDIR)/$$TAG/sitter-win32-$$TAG" ; \

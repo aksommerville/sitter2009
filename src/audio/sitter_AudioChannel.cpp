@@ -3,7 +3,7 @@
   #ifdef SITTER_WIN32
     typedef int iconv_t; // wtf, ms?
   #endif
-  #include <SDL/SDL.h>
+  //#include <SDL/SDL.h>
 #endif
 #include "sitter_Error.h"
 #include "sitter_AudioManager.h"
@@ -86,7 +86,7 @@ void AudioSampleChannel::setSample(const void *src,int srcsamplec,int loop) {
   if (((src==NULL)!=(srcsamplec==0))||(srcsamplec<0)) sitter_throw(ArgumentError,"AudioSampleChannel::setSample(%p,%d)",src,srcsamplec);
   if (samplev) mgr->game->res->unloadSoundEffectByBuffer(samplev);
   #ifndef SITTER_WII
-    SDL_LockAudio();
+    mgr->lock();
   #endif
     samplev=(int16_t*)src;
     samplec=srcsamplec;
@@ -95,7 +95,7 @@ void AudioSampleChannel::setSample(const void *src,int srcsamplec,int loop) {
     playing=samplev?true:false;
     level=0xff;
   #ifndef SITTER_WII
-    SDL_UnlockAudio();
+    mgr->unlock();
   #endif
 }
 

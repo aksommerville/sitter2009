@@ -25,6 +25,7 @@ public:
   AudioChannel **chanv; int chanc,chana;
   int *mixbuf;
   int16_t *chbuf;
+  int mixbufa;
   Song *song;
 
   AudioManager() { chanv=0; chanc=0; mixbuf=0; chbuf=0; song=0; } // only used by DummyAudioManager
@@ -47,6 +48,9 @@ public:
   virtual AudioSampleChannel *findUnusedSampleChannel();//don't use
   virtual AudioSampleChannel *getSampleChannel(bool interrupt=true,int *index=0); // if interrupt, return the channel closest to finishing
   virtual void flushInstrumentChannels();
+  
+  void lock();
+  void unlock();
   
 };
 

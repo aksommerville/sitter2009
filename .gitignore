@@ -1,4 +1,6 @@
 /bin
+/linuxdrm
+/linuxsdl
 *~
 ~*
 .DS_Store

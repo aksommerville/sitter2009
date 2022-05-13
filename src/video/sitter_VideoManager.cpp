@@ -1,4 +1,6 @@
 #ifndef SITTER_WII
+#include <cstdlib>
+#include <cstring>
 #include "sitter_Error.h"
 #include "sitter_string.h"
 #include "sitter_Menu.h"
@@ -55,37 +57,42 @@ VideoManager::VideoManager(Game *game,int w,int h,int flags):game(game) {
   texv=NULL; texc=texa=0;
   gxtexbuf=NULL; gxtexbuflen=0;
   scalebuf=NULL; scalebuflen=0;
-
-  if (SDL_Init(SDL_INIT_VIDEO)) sitter_throw(SDLError,"SDL_Init(SDL_INIT_VIDEO): %s",SDL_GetError());
-  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
   
-  /* fullscreen snarkery */
-  int sdlflags=SDL_OPENGL;
-  if (flags&SITTER_VIDEO_FULLSCREEN) {
-    sdlflags|=SDL_FULLSCREEN;
-    if (flags&SITTER_VIDEO_CHOOSEDIMS) {
-      SDL_Rect **modev=SDL_ListModes(NULL,sdlflags);
-      if (!modev) sdlflags&=~SDL_FULLSCREEN; // no fullscreen
-      else if (modev==(SDL_Rect**)-1) ; // any dimensions ok
-      else { // check dimensions based on manhattan distance to requested dimensions
-        int bestw=-1,besth=-1,bestdiff=0x7fffffff;
-        for (SDL_Rect **modei=modev;*modei;modei++) {
-          int thisdiff=(((*modei)->w>w)?((*modei)->w-w):(w-(*modei)->w));
-          thisdiff+=(((*modei)->h>h)?((*modei)->h-h):(h-(*modei)->h));
-          if (thisdiff<bestdiff) {
-            bestdiff=thisdiff;
-            bestw=(*modei)->w;
-            besth=(*modei)->h;
+  #if defined(SITTER_LINUX_DRM)
+    if (!(drm=sitter_drm_init())) sitter_throw(Error,"sitter_drm_init failed");
+    w=sitter_drm_get_width(drm);
+    h=sitter_drm_get_height(drm);
+  #else
+    if (SDL_Init(SDL_INIT_VIDEO)) sitter_throw(SDLError,"SDL_Init(SDL_INIT_VIDEO): %s",SDL_GetError());
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,1);
+  
+    /* fullscreen snarkery */
+    int sdlflags=SDL_OPENGL;
+    if (flags&SITTER_VIDEO_FULLSCREEN) {
+      sdlflags|=SDL_FULLSCREEN;
+      if (flags&SITTER_VIDEO_CHOOSEDIMS) {
+        SDL_Rect **modev=SDL_ListModes(NULL,sdlflags);
+        if (!modev) sdlflags&=~SDL_FULLSCREEN; // no fullscreen
+        else if (modev==(SDL_Rect**)-1) ; // any dimensions ok
+        else { // check dimensions based on manhattan distance to requested dimensions
+          int bestw=-1,besth=-1,bestdiff=0x7fffffff;
+          for (SDL_Rect **modei=modev;*modei;modei++) {
+            int thisdiff=(((*modei)->w>w)?((*modei)->w-w):(w-(*modei)->w));
+            thisdiff+=(((*modei)->h>h)?((*modei)->h-h):(h-(*modei)->h));
+            if (thisdiff<bestdiff) {
+              bestdiff=thisdiff;
+              bestw=(*modei)->w;
+              besth=(*modei)->h;
+            }
           }
+          if (bestw<0) sdlflags&=~SDL_FULLSCREEN;
+          else { w=bestw; h=besth; }
         }
-        if (bestw<0) sdlflags&=~SDL_FULLSCREEN;
-        else { w=bestw; h=besth; }
       }
     }
-  }
-  
-  if (!(screen=SDL_SetVideoMode(w,h,32,sdlflags))) 
-    sitter_throw(SDLError,"SDL_SetVideoMode(%d,%d,32,0x%x): %s",w,h,sdlflags,SDL_GetError());
+    if (!(screen=SDL_SetVideoMode(w,h,32,sdlflags))) 
+      sitter_throw(SDLError,"SDL_SetVideoMode(%d,%d,32,0x%x): %s",w,h,sdlflags,SDL_GetError());
+  #endif
     
   glDisable(GL_DEPTH_TEST);
   glEnable(GL_TEXTURE_2D);
@@ -129,7 +136,11 @@ VideoManager::VideoManager(Game *game,int w,int h,int flags):game(game) {
 }
 
 VideoManager::~VideoManager() {
-  SDL_Quit();
+  #if SITTER_LINUX_DRM
+    sitter_drm_quit(drm);
+  #else
+    SDL_Quit();
+  #endif
   if (menuv) free(menuv);
   if (texv) free(texv);
   if (gxtexbuf) free(gxtexbuf);
@@ -137,6 +148,8 @@ VideoManager::~VideoManager() {
 }
 
 void VideoManager::reconfigure() {
+  fprintf(stderr,"%s\n",__func__);
+  #if !defined(SITTER_LINUX_DRM) //TODO i think this is not needed? check call sites
   int w=game->cfg->getOption_int("winwidth");
   int h=game->cfg->getOption_int("winheight");
   int sdlflags=SDL_OPENGL;
@@ -172,6 +185,7 @@ void VideoManager::reconfigure() {
   glOrtho(0,w,h,0,0,1);
   glMatrixMode(GL_MODELVIEW);
   for (int i=0;i<menuc;i++) menuv[i]->pack(false);
+  #endif
 }
 
 /******************************************************************************
@@ -210,7 +224,11 @@ void VideoManager::draw() {
   else highscore_dirty=true;
   for (int i=0;i<menuc;i++) drawMenu(menuv[i]);
   if (game->hakeyboard) drawHAKeyboard();
-  SDL_GL_SwapBuffers();
+  #ifdef SITTER_LINUX_DRM
+    if (sitter_drm_swap(drm)<0) sitter_throw(Error,"Failed to swap video");
+  #else
+    SDL_GL_SwapBuffers();
+  #endif
 }
 
 /******************************************************************************
@@ -265,21 +283,23 @@ void VideoManager::drawHAKeyboard() {
  
 void VideoManager::drawRadar() {
   /* make a projection that puts the whole world onscreen without distorting aspect ratio */
-  int worldw=(game->grid?(game->grid->colw*game->grid->colc):screen->w);
-  int worldh=(game->grid?(game->grid->rowh*game->grid->rowc):screen->h);
+  int screenw=getScreenWidth();
+  int screenh=getScreenHeight();
+  int worldw=(game->grid?(game->grid->colw*game->grid->colc):screenw);
+  int worldh=(game->grid?(game->grid->rowh*game->grid->rowc):screenh);
   double worldaspect=((double)worldw)/((double)worldh);
-  double screenaspect=((double)screen->w)/((double)screen->h);
+  double screenaspect=((double)screenw)/((double)screenh);
   int draww,drawh;
   if (worldaspect>screenaspect) { // world wider than screen, match width first
-    draww=screen->w;//>>1;
+    draww=screenw;//>>1;
     drawh=draww/worldaspect;
   } else {
-    drawh=screen->h;//>>1;
+    drawh=screenh;//>>1;
     draww=drawh*worldaspect;
   }
-  int drawx=(screen->w>>1)-(draww>>1);
-  int drawy=(screen->h>>1)-(drawh>>1);
-  glViewport(drawx,screen->h-(drawy+drawh),draww,drawh);
+  int drawx=(screenw>>1)-(draww>>1);
+  int drawy=(screenh>>1)-(drawh>>1);
+  glViewport(drawx,screenh-(drawy+drawh),draww,drawh);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(0,worldw,worldh,0,0,1);
@@ -373,10 +393,10 @@ void VideoManager::drawRadar() {
     glEnd();
   }
   /* restore projection */
-  glViewport(0,0,screen->w,screen->h);
+  glViewport(0,0,screenw,screenh);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0,screen->w,screen->h,0,0,1);
+  glOrtho(0,screenw,screenh,0,0,1);
   glMatrixMode(GL_MODELVIEW);
 }
 
@@ -385,6 +405,8 @@ void VideoManager::drawRadar() {
  *****************************************************************************/
  
 void VideoManager::drawHighScores() {
+  int screenw=getScreenWidth();
+  int screenh=getScreenHeight();
   if (highscore_dirty) {
     game->hisc->format(highscore_format_buffer,SITTER_HIGHSCORE_FORMAT_BUFFER_LEN,game->grid_set,
       game->grid_index,game->lvlplayerc,game->hsresult-1);
@@ -392,17 +414,19 @@ void VideoManager::drawHighScores() {
   }
   int top=0;
   for (int i=0;i<menuc;i++) if (menuv[i]->y+menuv[i]->h+10>top) top=menuv[i]->y+menuv[i]->h+10;
-  drawBoundedString(0,top,screen->w,screen->h-top,highscore_format_buffer,game->hsfonttexid,0xffffffff,12,16,true,false);
+  drawBoundedString(0,top,screenw,screenh-top,highscore_format_buffer,game->hsfonttexid,0xffffffff,12,16,true,false);
 }
 
 void VideoManager::drawBlotter(uint32_t rgba) {
+  int screenw=getScreenWidth();
+  int screenh=getScreenHeight();
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_QUADS);
     glColor4ub(rgba>>24,rgba>>16,rgba>>8,rgba);
     glVertex2i(0,0);
-    glVertex2i(0,screen->h);
-    glVertex2i(screen->w,screen->h);
-    glVertex2i(screen->w,0);
+    glVertex2i(0,screenh);
+    glVertex2i(screenw,screenh);
+    glVertex2i(screenw,0);
   glEnd();
   glEnable(GL_TEXTURE_2D);
 }
@@ -413,18 +437,20 @@ void VideoManager::drawBlotter(uint32_t rgba) {
   
 void VideoManager::drawGrid(Grid *grid) {
   if (!grid||!grid->cellv) return;
+  int screenw=getScreenWidth();
+  int screenh=getScreenHeight();
   /* background */
   int worldw=grid->colc*grid->colw;
   int worldh=grid->rowc*grid->rowh;
-  int blotterleft=0,blottertop=0,blotterright=screen->w,blotterbottom=screen->h;
-  if ((worldw<screen->w)||(worldh<screen->h)) { // grid smaller than screen on at least one axis
+  int blotterleft=0,blottertop=0,blotterright=screenw,blotterbottom=screenh;
+  if ((worldw<screenw)||(worldh<screenh)) { // grid smaller than screen on at least one axis
     drawBlotter(0x00000000);
-    if (worldw<screen->w) {
-      blotterleft=(screen->w>>1)-(worldw>>1);
+    if (worldw<screenw) {
+      blotterleft=(screenw>>1)-(worldw>>1);
       blotterright=blotterleft+worldw;
     }
-    if (worldh<screen->h) {
-      blottertop=(screen->h>>1)-(worldh>>1);
+    if (worldh<screenh) {
+      blottertop=(screenh>>1)-(worldh>>1);
       blotterbottom=blottertop+worldh;
     }
   }
@@ -452,8 +478,8 @@ void VideoManager::drawGrid(Grid *grid) {
   // cx,cy,cw,ch: visible boundaries in cell coordinates
   int cx=grid->scrollx/grid->colw;
   int cy=grid->scrolly/grid->rowh;
-  int cw=(screen->w+grid->colw-1)/grid->colw+1;
-  int ch=(screen->h+grid->rowh-1)/grid->rowh+1;
+  int cw=(screenw+grid->colw-1)/grid->colw+1;
+  int ch=(screenh+grid->rowh-1)/grid->rowh+1;
   int xshift=-grid->scrollx%grid->colw;
   int yshift=-grid->scrolly%grid->rowh;
   for (int row=0;row<ch;row++) {
@@ -597,6 +623,8 @@ void VideoManager::drawControl() {
  
 void VideoManager::drawEditorDecorations() {
   if (!game->grid) return;
+  int screenw=getScreenWidth();
+  int screenh=getScreenHeight();
   uint8_t op8=(game->editor_orn_op*0xff);
   
   /* red square around selected cell */
@@ -613,8 +641,8 @@ void VideoManager::drawEditorDecorations() {
   glEnable(GL_TEXTURE_2D);
   
   if (game->editor_palette) {
-    int left=(screen->w>>1)-(game->grid->colw*8);
-    int y=(screen->h>>1)-(game->grid->rowh*8);
+    int left=(screenw>>1)-(game->grid->colw*8);
+    int y=(screenh>>1)-(game->grid->rowh*8);
     int cellid=0;
     
     /* gray out background, even grayer where palette is going */
@@ -622,9 +650,9 @@ void VideoManager::drawEditorDecorations() {
     glBegin(GL_QUADS);
       glColor4ub(0x80,0x80,0x80,0x80);
       glVertex2i(0,0);
-      glVertex2i(0,screen->h);
-      glVertex2i(screen->w,screen->h);
-      glVertex2i(screen->w,0);
+      glVertex2i(0,screenh);
+      glVertex2i(screenw,screenh);
+      glVertex2i(screenw,0);
       glColor4ub(0x55,0x55,0x55,0x80);
       glVertex2i(left,y);
       glVertex2i(left,y+game->grid->rowh*16);
@@ -671,6 +699,8 @@ void VideoManager::drawEditorDecorations() {
  *****************************************************************************/
 
 void VideoManager::drawMenu(Menu *menu) {
+  int screenw=getScreenWidth();
+  int screenh=getScreenHeight();
 
   /* background */
   if (menu->bgtexid>=0) {
@@ -748,16 +778,16 @@ void VideoManager::drawMenu(Menu *menu) {
       int itemc=(b_height+menu->itemh-1)/menu->itemh;
       if (firstitem+itemc>menu->itemc) itemc=menu->itemc-firstitem;
       if (itemc>0) { // shouldn't have allowed scroll this low, but... ok?
-        glViewport(b_left,screen->h-(b_top+b_height),b_width-scrollbarw,b_height);
+        glViewport(b_left,screenh-(b_top+b_height),b_width-scrollbarw,b_height);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
         glOrtho(b_left,b_left+b_width-scrollbarw,b_top+b_height,b_top,0,1);
         glMatrixMode(GL_MODELVIEW);
         drawMenuItems(menu,firstitem,itemc,b_left,b_top-(menu->itemscroll%menu->itemh),b_width-scrollbarw);
-        glViewport(0,0,screen->w,screen->h);
+        glViewport(0,0,screenw,screenh);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
-        glOrtho(0,screen->w,screen->h,0,0,1);
+        glOrtho(0,screenw,screenh,0,0,1);
         glMatrixMode(GL_MODELVIEW);
       }
       /* scroll bar */

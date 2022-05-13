@@ -8,7 +8,11 @@
 #ifdef SITTER_WIN32
   typedef int iconv_t;
 #endif
-#include <SDL/SDL.h>
+#ifdef SITTER_LINUX_DRM
+  #include "drm_alsa_evdev/sitter_evdev.h"
+#else
+  #include <SDL/SDL.h>
+#endif
 
 class Game;
 

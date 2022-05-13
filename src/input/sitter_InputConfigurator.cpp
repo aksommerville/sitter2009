@@ -1,4 +1,4 @@
-#ifndef SITTER_WII
+#if !defined(SITTER_WII)
 
 #include <malloc.h>
 #include <string.h>

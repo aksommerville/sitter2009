@@ -15,6 +15,9 @@
   #include <SDL/SDL.h>
   #define GLAPI __stdcall
   #include <GL/gl.h>
+#elif defined SITTER_LINUX_DRM
+  #include "drm_alsa_evdev/sitter_drm.h"
+  #include <GL/gl.h>
 #else
   #include <SDL/SDL.h>
   #include <GL/gl.h>
@@ -37,7 +40,11 @@ class Menu;
 class VideoManager {
 
   Game *game;
-  SDL_Surface *screen;
+  #if defined(SITTER_LINUX_DRM)
+    struct sitter_drm *drm;
+  #else
+    SDL_Surface *screen;
+  #endif
   
   bool debug_goals;
   
@@ -70,9 +77,15 @@ public:
   
   void reconfigure();
   
-  int getScreenWidth() const { return screen->w; }
-  int getScreenHeight() const { return screen->h; }
-  Rect getBounds() const { return Rect(screen->w,screen->h); }
+  #ifdef SITTER_LINUX_DRM
+    int getScreenWidth() const { return sitter_drm_get_width(drm); }
+    int getScreenHeight() const { return sitter_drm_get_height(drm); }
+    Rect getBounds() const { return Rect(sitter_drm_get_width(drm),sitter_drm_get_height(drm)); }
+  #else
+    int getScreenWidth() const { return screen->w; }
+    int getScreenHeight() const { return screen->h; }
+    Rect getBounds() const { return Rect(screen->w,screen->h); }
+  #endif
   
   void update();
   void draw();

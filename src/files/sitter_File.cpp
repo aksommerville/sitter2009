@@ -137,7 +137,7 @@ int File::writef(const char *fmt,...) {
  *****************************************************************************/
  
 char *sitter_resolvePath(const char *path) {
-  #ifdef SITTER_LINUX // wordexp is available, so use it.
+  #if defined(SITTER_LINUX_SDL) || defined(SITTER_LINUX_DRM) // wordexp is available, so use it.
     wordexp_t wet={0};
     switch (int err=wordexp(path,&wet,WRDE_NOCMD)) {
       case 0: break;

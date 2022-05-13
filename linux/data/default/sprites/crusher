@@ -1,8 +1,0 @@
-class            CrusherSprite
-width            64
-height           64
-groups           all vis upd solid
-
-face idle
-  crusher/base-0.png 1000
-endface

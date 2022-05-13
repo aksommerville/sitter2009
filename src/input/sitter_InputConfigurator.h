@@ -1,7 +1,5 @@
 #ifdef SITTER_WII
-
-#include "sitter_InputConfigurator_wii.h"
-
+  #include "sitter_InputConfigurator_wii.h"
 #else
 
 #ifndef SITTER_INPUTCONFIGURATOR_H
