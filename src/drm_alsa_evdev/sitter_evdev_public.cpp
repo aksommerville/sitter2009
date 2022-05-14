@@ -203,6 +203,13 @@ static int sitter_evdev_try_open(const char *path) {
   }
   const struct sitter_my_device *my_device=sitter_check_my_device(id.vendor,id.product);
   
+  //XXX TEMP
+  // skip my keyboard. it will get skipped eventually anyway, but it noises up the logging
+  if ((id.vendor==0x2222)&&(id.product==0x0022)) {
+    close(fd);
+    return 0;
+  }
+  
   // Try to grab it. If this fails, whatever.
   if (ioctl(fd,EVIOCGRAB,1)<0) ;
   
