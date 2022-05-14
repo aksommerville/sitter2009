@@ -263,10 +263,17 @@ static int sitter_evdev_try_open(const char *path) {
     device->buttonc=my_device->buttonc;
     memcpy(device->buttonv,my_device->buttonv,sizeof(struct sitter_evdev_button)*my_device->buttonc);
   } else {
+    fprintf(stderr,"JOYSTICK: %04x:%04x: %s\n",device->vid,device->pid,device->name);
     device->last_map_usage=0;
     int code=0;
     for (code=0;code<ABS_CNT;code++) {
       if (!(absbit[code>>3]&(1<<(code&7)))) continue;
+      int mid=(absinfov[code].minimum+absinfov[code].maximum)>>1;
+      int lo=(absinfov[code].minimum+mid)>>1;
+      int hi=(absinfov[code].maximum+mid)>>1;
+      if (lo>=mid) lo--;
+      if (hi<=mid) hi++;
+      fprintf(stderr,"    {EV_ABS,%d,SITTER_USAGE_,0,0,%d,%d},\n",code,lo,hi);
       if (sitter_evdev_map_abs(device,code,absinfov+code)<0) {
         sitter_evdev_drop_device(device);
         return -1;
@@ -280,6 +287,7 @@ static int sitter_evdev_try_open(const char *path) {
       for (;minor<8;minor++) {
         if (!(keybit[major]&(1<<minor))) continue;
         int code=(major<<3)+minor;
+        fprintf(stderr,"    {EV_KEY,%d,SITTER_USAGE_,0,0,1,INT_MAX},\n",code);
         if (sitter_evdev_map_key(device,code)<0) {
           sitter_evdev_drop_device(device);
           return -1;
