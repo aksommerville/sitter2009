@@ -65,4 +65,18 @@ extern struct sitter_evdev {
 
 #define DEVICE_DIR "/dev/input/"
 
+/* We are not participating in the general mapping regime.
+ * Too complicated, for too little payoff.
+ * Hell was I thinking?
+ * Anyway, since this is only intended for a one-time kiosk use, I'm hard-coding all my device mappings.
+ * If we detect something else, we'll still use it, but mappings will be willy-nilly.
+ */
+struct sitter_my_device {
+  int vid,pid;
+  const char *nickname;
+  int buttonc;
+  struct sitter_evdev_button buttonv[]; // must be sorted; will copy verbatim to device
+};
+const struct sitter_my_device *sitter_check_my_device(int vid,int pid);
+
 #endif

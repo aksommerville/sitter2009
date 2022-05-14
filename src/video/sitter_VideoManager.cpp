@@ -212,15 +212,18 @@ void VideoManager::update() {
 /******************************************************************************
  * render, high level
  *****************************************************************************/
- 
+
 void VideoManager::draw() {
   glClear(GL_COLOR_BUFFER_BIT);
-  if (game->grid) drawGrid(game->grid);
-  if (spr_vis) drawSprites(spr_vis);
-  if (game->drawradar&&(!game->gameover||game->editing_map)) drawRadar();
-  if (game->editing_map) drawEditorDecorations();
-  else if (game->grid) drawControl();
-  if (game->drawhighscores||menuc) drawBlotter(BLOTTER_COLOR);
+  if (!game->gameover) {
+    if (game->grid) drawGrid(game->grid);
+    if (spr_vis) drawSprites(spr_vis);
+    if (game->drawradar&&(!game->gameover||game->editing_map)) drawRadar();
+    if (game->editing_map) drawEditorDecorations();
+    else if (game->grid) drawControl();
+    if (menuc) drawBlotter(BLOTTER_COLOR);
+  }
+  //if (game->drawhighscores||menuc) drawBlotter(BLOTTER_COLOR);
   if (game->drawhighscores) drawHighScores();
   else highscore_dirty=true;
   for (int i=0;i<menuc;i++) drawMenu(menuv[i]);
@@ -237,27 +240,33 @@ void VideoManager::draw() {
  *****************************************************************************/
  
 void VideoManager::drawHAKeyboard() {
+
+  glDisable(GL_TEXTURE_2D);
+    
+  glBegin(GL_QUADS);
   for (int i=0;i<game->hakeyboard->keyc;i++) if (HAKeyboard::HAKey *k=game->hakeyboard->keyv+i) {
-    /* background */
-    glDisable(GL_TEXTURE_2D);
-    glBegin(GL_QUADS);
-      glColor4ub(k->bgcolor>>24,k->bgcolor>>16,k->bgcolor>>8,k->bgcolor);
-      glVertex2i(k->r.left() ,k->r.top()   );
-      glVertex2i(k->r.left() ,k->r.bottom());
-      glVertex2i(k->r.right(),k->r.bottom());
-      glVertex2i(k->r.right(),k->r.top()   );
-    glEnd();
-    /* outline */
-    glBegin(GL_LINE_STRIP);
-      glColor4ub(k->linecolor>>24,k->linecolor>>16,k->linecolor>>8,k->linecolor);
-      glVertex2i(k->r.left() ,k->r.top()   );
-      glVertex2i(k->r.left() ,k->r.bottom());
-      glVertex2i(k->r.right(),k->r.bottom());
-      glVertex2i(k->r.right(),k->r.top()   );
-      glColor4ub(0xff,0xff,0xff,0xff);
-    glEnd();
-    /* foreground */
-    glEnable(GL_TEXTURE_2D);
+    glColor4ub(k->bgcolor>>24,k->bgcolor>>16,k->bgcolor>>8,k->bgcolor);
+    glVertex2i(k->r.left() ,k->r.top()   );
+    glVertex2i(k->r.left() ,k->r.bottom());
+    glVertex2i(k->r.right(),k->r.bottom());
+    glVertex2i(k->r.right(),k->r.top()   );
+  }
+  glEnd();
+  
+  /* This causes problems. I'm not sure we need it.
+  glBegin(GL_LINE_STRIP);
+  for (int i=0;i<game->hakeyboard->keyc;i++) if (HAKeyboard::HAKey *k=game->hakeyboard->keyv+i) {
+    glColor4ub(k->linecolor>>24,k->linecolor>>16,k->linecolor>>8,k->linecolor);
+    glVertex2i(k->r.left() ,k->r.top()   );
+    glVertex2i(k->r.left() ,k->r.bottom());
+    glVertex2i(k->r.right(),k->r.bottom());
+    glVertex2i(k->r.right(),k->r.top()   );
+  }
+  glEnd();
+  /**/
+  
+  glEnable(GL_TEXTURE_2D);
+  for (int i=0;i<game->hakeyboard->keyc;i++) if (HAKeyboard::HAKey *k=game->hakeyboard->keyv+i) {
     uint32_t ch=k->val[game->hakeyboard->shiftstate];
     char lbl[4]; lbl[0]=0;
     switch (ch) {

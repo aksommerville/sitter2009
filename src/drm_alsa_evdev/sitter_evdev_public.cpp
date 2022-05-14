@@ -201,6 +201,7 @@ static int sitter_evdev_try_open(const char *path) {
     close(fd);
     return 0;
   }
+  const struct sitter_my_device *my_device=sitter_check_my_device(id.vendor,id.product);
   
   // Try to grab it. If this fails, whatever.
   if (ioctl(fd,EVIOCGRAB,1)<0) ;
@@ -209,16 +210,18 @@ static int sitter_evdev_try_open(const char *path) {
   uint8_t absbit[(ABS_CNT+7)>>3]={0};
   uint8_t keybit[(KEY_CNT+7)>>3]={0};
   struct input_absinfo absinfov[ABS_CNT]={0};
-  ioctl(fd,EVIOCGBIT(EV_ABS,sizeof(absbit)),absbit);
-  ioctl(fd,EVIOCGBIT(EV_KEY,sizeof(keybit)),keybit);
-  int code=0;
-  for (;code<ABS_CNT;code++) {
-    if (!(absbit[code>>3]&(1<<(code&7)))) continue;
-    ioctl(fd,EVIOCGABS(code),absinfov+code);
-  }
-  if (!sitter_evdev_device_is_usable(id.vendor,id.product,keybit,absbit,absinfov)) {
-    close(fd);
-    return 0;
+  if (!my_device) {
+    ioctl(fd,EVIOCGBIT(EV_ABS,sizeof(absbit)),absbit);
+    ioctl(fd,EVIOCGBIT(EV_KEY,sizeof(keybit)),keybit);
+    int code=0;
+    for (;code<ABS_CNT;code++) {
+      if (!(absbit[code>>3]&(1<<(code&7)))) continue;
+      ioctl(fd,EVIOCGABS(code),absinfov+code);
+    }
+    if (!sitter_evdev_device_is_usable(id.vendor,id.product,keybit,absbit,absinfov)) {
+      close(fd);
+      return 0;
+    }
   }
   
   // Add to the list.
@@ -231,47 +234,61 @@ static int sitter_evdev_try_open(const char *path) {
   device->pid=id.product;
   
   // Fetch name.
-  int namec=ioctl(device->fd,EVIOCGNAME(sizeof(device->name)),device->name);
-  if (namec>0) {
-    if (namec>=sizeof(device->name)) namec=sizeof(device->name)-1;
-    int leadspace=0;
-    while ((leadspace<namec)&&((unsigned char)device->name[leadspace]<=0x20)) leadspace++;
-    if (leadspace) {
-      namec-=leadspace;
-      memmove(device->name,device->name+leadspace,namec);
+  if (my_device) {
+    strcpy(device->name,my_device->nickname);
+  } else {
+    int namec=ioctl(device->fd,EVIOCGNAME(sizeof(device->name)),device->name);
+    if (namec>0) {
+      if (namec>=sizeof(device->name)) namec=sizeof(device->name)-1;
+      int leadspace=0;
+      while ((leadspace<namec)&&((unsigned char)device->name[leadspace]<=0x20)) leadspace++;
+      if (leadspace) {
+        namec-=leadspace;
+        memmove(device->name,device->name+leadspace,namec);
+      }
+      while ((namec>0)&&((unsigned char)device->name[namec-1]<=0x20)) namec--;
+      int i=0; for (;i<namec;i++) {
+        if ((device->name[i]<0x20)||(device->name[i]>0x7e)) device->name[i]='?';
+      }
+      device->name[namec]=0;
     }
-    while ((namec>0)&&((unsigned char)device->name[namec-1]<=0x20)) namec--;
-    int i=0; for (;i<namec;i++) {
-      if ((device->name[i]<0x20)||(device->name[i]>0x7e)) device->name[i]='?';
-    }
-    device->name[namec]=0;
   }
   
   // Generate maps.
-  device->last_map_usage=0;
-  for (code=0;code<ABS_CNT;code++) {
-    if (!(absbit[code>>3]&(1<<(code&7)))) continue;
-    if (sitter_evdev_map_abs(device,code,absinfov+code)<0) {
+  if (my_device) {
+    if (!(device->buttonv=(struct sitter_evdev_button*)malloc(sizeof(struct sitter_evdev_button)*my_device->buttonc))) {
       sitter_evdev_drop_device(device);
       return -1;
     }
-  }
-  device->last_map_usage=0;
-  int major=0;
-  for (;major<sizeof(keybit);major++) {
-    if (!keybit[major]) continue;
-    int minor=0;
-    for (;minor<8;minor++) {
-      if (!(keybit[major]&(1<<minor))) continue;
-      int code=(major<<3)+minor;
-      if (sitter_evdev_map_key(device,code)<0) {
+    device->buttonc=my_device->buttonc;
+    memcpy(device->buttonv,my_device->buttonv,sizeof(struct sitter_evdev_button)*my_device->buttonc);
+  } else {
+    device->last_map_usage=0;
+    int code=0;
+    for (code=0;code<ABS_CNT;code++) {
+      if (!(absbit[code>>3]&(1<<(code&7)))) continue;
+      if (sitter_evdev_map_abs(device,code,absinfov+code)<0) {
         sitter_evdev_drop_device(device);
         return -1;
       }
     }
+    device->last_map_usage=0;
+    int major=0;
+    for (;major<sizeof(keybit);major++) {
+      if (!keybit[major]) continue;
+      int minor=0;
+      for (;minor<8;minor++) {
+        if (!(keybit[major]&(1<<minor))) continue;
+        int code=(major<<3)+minor;
+        if (sitter_evdev_map_key(device,code)<0) {
+          sitter_evdev_drop_device(device);
+          return -1;
+        }
+      }
+    }
   }
   
-  fprintf(stderr,"%s: Using input device %04x:%04x\n",path,device->vid,device->pid);
+  fprintf(stderr,"%s: Using input device %04x:%04x (%s)\n",path,device->vid,device->pid,my_device?"known":"guessed");
   return 0;
 }
 

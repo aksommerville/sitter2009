@@ -164,7 +164,7 @@ int sitter_drm_swap(struct sitter_drm *driver) {
   // There must be no more than one page flip in flight at a time.
   // If one is pending -- likely -- give it a chance to finish.
   if (driver->flip_pending) {
-    if (sitter_drm_poll_file(driver,10)<0) return -1;
+    if (sitter_drm_poll_file(driver,20)<0) return -1;
     if (driver->flip_pending) {
       // Page flip didn't complete after a 10 ms delay? Drop the frame, no worries.
       return 0;
@@ -183,7 +183,7 @@ int sitter_drm_swap(struct sitter_drm *driver) {
     driver->flip_pending=0;
     return -1;
   }
-
+  
   return 0;
 }
 

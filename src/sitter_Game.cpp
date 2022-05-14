@@ -554,14 +554,22 @@ void Game::mmain() {
   
   while (!quit) {
     updateInput();
-    for (int i=timer->tick();i-->0;) {
+    #ifdef SITTER_LINUX_DRM
+      // DRM gives us reliable vsync delay. Don't bother with manual timing.
+      // (also we're not doing the editor)
       audio->update();
       video->update();
-      if (editing_map) update_editor();
-      else {
-        update();
+      update();
+    #else
+      for (int i=timer->tick();i-->0;) {
+        audio->update();
+        video->update();
+        if (editing_map) update_editor();
+        else {
+          update();
+        }
       }
-    }
+    #endif
     video->draw();
   }
 }
