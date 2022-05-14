@@ -156,6 +156,16 @@ static int sitter_drm_swap_egl(uint32_t *fbid,struct sitter_drm *driver) {
   return 0;
 }
 
+/* Let the current swap finish.
+ */
+ 
+int sitter_drm_drain(struct sitter_drm *driver) {
+  if (driver->flip_pending) {
+    if (sitter_drm_poll_file(driver,20)<0) return -1;
+  }
+  return 0;
+}
+
 /* Swap.
  */
 
@@ -163,10 +173,11 @@ int sitter_drm_swap(struct sitter_drm *driver) {
 
   // There must be no more than one page flip in flight at a time.
   // If one is pending -- likely -- give it a chance to finish.
+  //...update: Actually not likely anymore, since I added drain(). But do this anyway to be safe.
   if (driver->flip_pending) {
     if (sitter_drm_poll_file(driver,20)<0) return -1;
     if (driver->flip_pending) {
-      // Page flip didn't complete after a 10 ms delay? Drop the frame, no worries.
+      // Page flip didn't complete after a 20 ms delay? Drop the frame, no worries.
       return 0;
     }
   }

@@ -214,20 +214,24 @@ void VideoManager::update() {
  *****************************************************************************/
 
 void VideoManager::draw() {
+  #ifdef SITTER_LINUX_DRM
+    sitter_drm_drain(drm);
+  #endif
   glClear(GL_COLOR_BUFFER_BIT);
-  if (!game->gameover) {
+  //if (!game->gameover) {
     if (game->grid) drawGrid(game->grid);
     if (spr_vis) drawSprites(spr_vis);
     if (game->drawradar&&(!game->gameover||game->editing_map)) drawRadar();
     if (game->editing_map) drawEditorDecorations();
     else if (game->grid) drawControl();
-    if (menuc) drawBlotter(BLOTTER_COLOR);
-  }
-  //if (game->drawhighscores||menuc) drawBlotter(BLOTTER_COLOR);
+    //if (menuc) drawBlotter(BLOTTER_COLOR);
+  //}
+  if (game->drawhighscores||menuc) drawBlotter(BLOTTER_COLOR);
   if (game->drawhighscores) drawHighScores();
   else highscore_dirty=true;
   for (int i=0;i<menuc;i++) drawMenu(menuv[i]);
   if (game->hakeyboard) drawHAKeyboard();
+  glFlush();
   #ifdef SITTER_LINUX_DRM
     if (sitter_drm_swap(drm)<0) sitter_throw(Error,"Failed to swap video");
   #else

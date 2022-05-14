@@ -11,6 +11,10 @@ void sitter_drm_quit(struct sitter_drm *drm);
 
 struct sitter_drm *sitter_drm_init();
 
+/* Drain, then draw, then swap.
+ * We pause for vsync during drain.
+ */
+int sitter_drm_drain(struct sitter_drm *drm);
 int sitter_drm_swap(struct sitter_drm *drm);
 
 int sitter_drm_get_width(const struct sitter_drm *drm);
