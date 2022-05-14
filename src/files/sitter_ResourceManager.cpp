@@ -62,7 +62,7 @@ const char *ResourceManager::resnameToPath(const char *resname,char **pfx,int *p
   if (!*pfx||!*pfxlen) refreshPrefixes();
   if (!*pfx||!*pfxlen) sitter_throw(FileNotFoundError,"res='%s', bad prefix",resname);
   int rnlen=0; while (resname[rnlen]) rnlen++;
-  if ((*pfxlen)+rnlen>=SITTER_RESMGR_PATH_MAX) sitter_throw(FileNotFoundError,"path too long",resname);
+  if ((*pfxlen)+rnlen>=SITTER_RESMGR_PATH_MAX) sitter_throw(FileNotFoundError,"path too long '%s'",resname);
   if (!rnlen) sitter_throw(FileNotFoundError,"empty resource name");
   memcpy(pathbuf,*pfx,*pfxlen);
   memcpy(pathbuf+(*pfxlen),resname,rnlen);

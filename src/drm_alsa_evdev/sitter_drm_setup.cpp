@@ -37,8 +37,8 @@ static int sitter_drm_pick_mode(
   // If we don't have something yet, anything is better than nothing.
   if (!aconn) return 1;
   
-  int reqw=640;
-  int reqh=480;
+  int reqw=800;
+  int reqh=600;
   int reqr=60;
   
   // Refresh rates that don't match the request are a real pain.
@@ -54,8 +54,9 @@ static int sitter_drm_pick_mode(
   
   // If one has the PREFERRED flag, that means it's already active.
   // That's good, we want it.
-  if ((amode->type&DRM_MODE_TYPE_PREFERRED)&&!(bmode->type&DRM_MODE_TYPE_PREFERRED)) return -1;
-  if (!(amode->type&DRM_MODE_TYPE_PREFERRED)&&(bmode->type&DRM_MODE_TYPE_PREFERRED)) return 1;
+  // Actually imma say no on this; the VCS tends to want to start in 4k, yuck.
+  //if ((amode->type&DRM_MODE_TYPE_PREFERRED)&&!(bmode->type&DRM_MODE_TYPE_PREFERRED)) return -1;
+  //if (!(amode->type&DRM_MODE_TYPE_PREFERRED)&&(bmode->type&DRM_MODE_TYPE_PREFERRED)) return 1;
   
   // Compare aspect ratios to the connector's physical size, closer is better.
   if ((amode->hdisplay!=bmode->hdisplay)||(amode->vdisplay!=bmode->vdisplay)) {
@@ -73,11 +74,11 @@ static int sitter_drm_pick_mode(
     }
   }
   
-  // Bigger is better?
-  if (amode->hdisplay>bmode->hdisplay) return -1;
-  if (amode->hdisplay<bmode->hdisplay) return 1;
-  if (amode->vdisplay>bmode->vdisplay) return -1;
-  if (amode->vdisplay<bmode->vdisplay) return 1;
+  // The logical screen won't go above 800x600, so let's say smaller is better.
+  if (amode->hdisplay>bmode->hdisplay) return 1;
+  if (amode->hdisplay<bmode->hdisplay) return -1;
+  if (amode->vdisplay>bmode->vdisplay) return 1;
+  if (amode->vdisplay<bmode->vdisplay) return -1;
   
   // OK, no opinion.
   return 0;
