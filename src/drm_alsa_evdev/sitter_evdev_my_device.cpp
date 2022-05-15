@@ -78,8 +78,9 @@ static const struct sitter_my_device sitter_my_device_ps2={
     {EV_KEY,299,SITTER_USAGE_,0,0,1,INT_MAX},
     /**/
     // EV_ABS (0,1,2,5:63..191),(16,17:-1..1) presumably the sticks (i don't want them)
-    {EV_ABS,16,SITTER_USAGE_X,0,0,-1,1},
-    {EV_ABS,17,SITTER_USAGE_Y,0,0,-1,1},
+    // Dpad is (0,1) when the light is off; (16,17) when it's on
+    {EV_ABS,0,SITTER_USAGE_X,0,0,63,191},
+    {EV_ABS,1,SITTER_USAGE_Y,0,0,63,191},
   },
 };
 
