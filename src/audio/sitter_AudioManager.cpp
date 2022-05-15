@@ -56,7 +56,7 @@ static void sitter_audio_callback1(AudioManager *audio,int16_t *dst,int dstframe
   }
   /* divide by calculated weight */
   //int weight=audio->chanc<<8;
-  int weight=512;
+  int weight=768;
   int *src=audio->mixbuf;
   for (int i=0;i<dstframec;i++) {
     int sample=(*src)/weight; if (sample<-32768) sample=-32768; else if (sample>32767) sample=32767;
