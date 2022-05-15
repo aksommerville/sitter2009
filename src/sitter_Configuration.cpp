@@ -427,7 +427,10 @@ void Configuration::readOption(const char *line) {
       else vlen++;
     }
   }
-  if (klen>=KEY_LEN_LIMIT) sitter_throw(ArgumentError,"key too long (%d, limit=%d)",klen,KEY_LEN_LIMIT-1);
+  if (klen>=KEY_LEN_LIMIT) {
+    //sitter_throw(ArgumentError,"key too long (%d, limit=%d)",klen,KEY_LEN_LIMIT-1);
+    return;
+  }
   if (!klen) sitter_throw(ArgumentError,"empty key");
   while (vlen&&isspace(line[vstart+vlen-1])) vlen--;
   char k[KEY_LEN_LIMIT];

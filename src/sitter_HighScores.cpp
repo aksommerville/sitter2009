@@ -219,7 +219,7 @@ void HighScores::format(char *dst,int dstlen,const char *setname,int gridindex,i
   if (!set) { dst[0]=0; return; }
   GridListEntry *grid=findGrid(set,gridindex,playerc);
   if (!grid) { dst[0]=0; return; }
-  int offset=snprintf(dst,dstlen,"DD/MM/YY  MM:SS.00 KILL NAME\n");
+  int offset=snprintf(dst,dstlen,"YYYY-MM-DD  MM:SS.00 KILL NAME\n");
   for (int i=0;i<grid->entc;i++) {
     time_t not_always_int_64_t=grid->entv[i].realtime;
     struct tm *btime=localtime(&not_always_int_64_t);
@@ -230,7 +230,7 @@ void HighScores::format(char *dst,int dstlen,const char *setname,int gridindex,i
       if (offset<dstlen) dst[offset]=0x01;
       offset++;
     }
-    offset+=snprintf(dst+offset,dstlen-offset,"%02d/%02d/%02d ",btime->tm_mday,btime->tm_mon+1,btime->tm_year%100);
+    offset+=snprintf(dst+offset,dstlen-offset,"%04d-%02d-%02d ",btime->tm_year+1900,btime->tm_mon+1,btime->tm_mday);
     offset+=snprintf(dst+offset,dstlen-offset,"%3d:%02d.%02d %4d %s\n",minutes,seconds,hundredths,grid->entv[i].murderc,grid->entv[i].name);
     if (i==highlight) {
       if (offset<dstlen) dst[offset]=0x02;

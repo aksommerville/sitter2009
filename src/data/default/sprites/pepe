@@ -1,7 +1,7 @@
 class             ClimbingChildSprite
 width             32
 height            32
-groups            all upd vis solid carry quarry
+groups            all upd vis solid carry quarry crushable slicable
 collision         edge grid sprites
 gravity
 pushable

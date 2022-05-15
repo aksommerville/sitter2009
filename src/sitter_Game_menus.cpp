@@ -51,8 +51,10 @@ void Game::openMainMenu() {
     item->choose(choice);
     menu->addItem(item);
   }
-  menu->addItem(new MenuItem(this,"Settings",video->loadTexture("icon/ic_settings.png",true),SITTER_BTN_CONFIG));
-  #ifndef SITTER_WII
+  #if !defined(SITTER_LINUX_DRM)
+    menu->addItem(new MenuItem(this,"Settings",video->loadTexture("icon/ic_settings.png",true),SITTER_BTN_CONFIG));
+  #endif
+  #if !defined(SITTER_WII) && !defined(SITTER_LINUX_DRM)
     menu->addItem(new MenuItem(this,"Map Editor",video->loadTexture("icon/ic_edit.png",true),SITTER_BTN_EDITOR));
   #endif
   menu->addItem(new MenuItem(this,"Credits",video->loadTexture("icon/ic_credits.png",true),SITTER_BTN_CREDITS));
@@ -73,7 +75,9 @@ void Game::openPauseMenu() {
     menu->addItem(new MenuItem(this,"Restart Level",video->loadTexture("icon/ic_restart.png",true),SITTER_BTN_RESTARTLVL));
     menu->addItem(new MenuItem(this,"Next Level",video->loadTexture("icon/ic_next.png",true),SITTER_BTN_NEXTLVL));
     menu->addItem(new MenuItem(this,"Main Menu",video->loadTexture("icon/ic_mainmenu.png",true),SITTER_BTN_MAINMENU));
-    menu->addItem(new MenuItem(this,"Settings",video->loadTexture("icon/ic_settings.png",true),SITTER_BTN_CONFIG));
+    #if !defined(SITTER_LINUX_DRM)
+      menu->addItem(new MenuItem(this,"Settings",video->loadTexture("icon/ic_settings.png",true),SITTER_BTN_CONFIG));
+    #endif
     menu->addItem(new MenuItem(this,"Quit",video->loadTexture("icon/ic_quit.png",true),SITTER_BTN_QUIT));
   }
   menu->pack();
