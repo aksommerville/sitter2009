@@ -157,7 +157,49 @@ static const struct sitter_my_device sitter_my_device_vcs={
   },
 };
 
-//TODO the 3 new 8bitdo devices, once they arrive
+/* 8bitdo Pro 2.
+ */
+static const struct sitter_my_device sitter_my_device_pro2={
+  .vid=0x2dc8,
+  .pid=0x3010,
+  .nickname="Pro 2",
+  .buttonc=7,
+  .buttonv={
+    // type code        usage         0,0 srclo srchi
+    {EV_KEY,0x0131,SITTER_USAGE_JUMP,  0,0,1,INT_MAX},//start
+    {EV_KEY,0x0134,SITTER_USAGE_PICKUP,0,0,1,INT_MAX},//south
+    {EV_KEY,0x013b,SITTER_USAGE_PAUSE, 0,0,1,INT_MAX},//unknown
+    {EV_ABS, 0,SITTER_USAGE_X,0,0,64,192},//lx
+    {EV_ABS, 1,SITTER_USAGE_Y,0,0,64,192},//ly
+    {EV_ABS,16,SITTER_USAGE_X,0,0,-1,1},//dpad x
+    {EV_ABS,17,SITTER_USAGE_Y,0,0,-1,1},//dpad y
+    /*2dc8:3010
+      01:0130: 0..0..2    # A (east)
+      01:0131: 0..0..2    # B (south)
+      01:0132: 0..0..2    # unknown
+      01:0133: 0..0..2    # X (north)
+      01:0134: 0..0..2    # Y (west)
+      01:0135: 0..0..2    # unknown
+      01:0136: 0..0..2    # L1
+      01:0137: 0..0..2    # R1
+      01:0138: 0..0..2    # L2
+      01:0139: 0..0..2    # R2
+      01:013a: 0..0..2    # select
+      01:013b: 0..0..2    # start
+      01:013c: 0..0..2    # heart (right aux); the other two auxes don't report
+      01:013d: 0..0..2    # lp
+      01:013e: 0..0..2    # rp
+      03:0000: 0..0..255  # lx
+      03:0001: 0..0..255  # ly (+down)
+      03:0002: 0..0..255  # rx
+      03:0005: 0..0..255  # ry (+down)
+      03:0009: 0..0..255  # r2a ; associated button triggers around v=43
+      03:000a: 0..0..255  # l2a
+      03:0010: -1..0..1   # dpad x
+      03:0011: -1..0..1   # dpad y
+      */
+  },
+};
 
 static const struct sitter_my_device *sitter_my_devicev[]={
   &sitter_my_device_xbox,
@@ -165,6 +207,7 @@ static const struct sitter_my_device *sitter_my_devicev[]={
   &sitter_my_device_ps2,
   &sitter_my_device_powera,
   &sitter_my_device_vcs,
+  &sitter_my_device_pro2,
 };
 
 const struct sitter_my_device *sitter_check_my_device(int vid,int pid) {
