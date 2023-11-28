@@ -588,8 +588,11 @@ void InputManager::writeConfiguration() {
     }
     d.append(kbuf,vbuf);
   }
-  game->cfg->removeInputOptions();
-  for (int i=0;i<d.entc;i++) game->cfg->addOption(d.entv[i].k,"",SITTER_CFGTYPE_STR,d.entv[i].v);
+  //game->cfg->removeInputOptions();
+  for (int i=0;i<d.entc;i++) {
+    game->cfg->removeOption(d.entv[i].k);
+    game->cfg->addOption(d.entv[i].k,"",SITTER_CFGTYPE_STR,d.entv[i].v);
+  }
   for (int i=0;i<joyc;i++) free(joyname[i]);
   free(joyname);
   #undef KBUF_LEN
@@ -768,6 +771,15 @@ bool InputManager::eventsMatch(const SDL_Event *a,const SDL_Event *b) {
 }
  
 void InputManager::receiveSDLEvent(const SDL_Event *evt) {
+
+  /*
+  switch (evt->type) {
+    case SDL_JOYBUTTONDOWN: fprintf(stderr,"button %d\n",evt->jbutton.button); break;
+    case SDL_JOYAXISMOTION: fprintf(stderr,"axis %d %d\n",evt->jaxis.axis,evt->jaxis.value); break;
+    case SDL_JOYHATMOTION: fprintf(stderr,"hat %d %d\n",evt->jhat.hat,evt->jhat.value); break;
+  }
+  /**/
+
   for (int i=0;i<mapc;i++) if (eventsMatch(evt,&(mapv[i].src))) {
     int val;
     switch (evt->type) {

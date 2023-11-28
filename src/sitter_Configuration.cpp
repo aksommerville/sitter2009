@@ -16,7 +16,7 @@
 #define NEGATIVE_SHORT_OPTION '^' // in a short option string, negates the next option
 #define CVTBUF_LEN 256
 static char _Configuration_cvtbuf[CVTBUF_LEN];
-#define KEY_LEN_LIMIT 64
+#define KEY_LEN_LIMIT 128
 #define DEFAULT_VALUE "1" // value when key is given alone
 #define DEFAULT_NO_VALUE "0" // value when given as "no-KEY"
 
@@ -194,6 +194,20 @@ void Configuration::removeInputOptions() {
       optc--;
       if (i<optc) memmove(optv+i,optv+i+1,sizeof(Option)*(optc-i));
     } else i++;
+  }
+}
+
+void Configuration::removeOption(const char *k) {
+  if (!k) return;
+  for (int i=optc;i-->0;) {
+    if (!strcmp(optv[i].k,k)) {
+      free(optv[i].k);
+      if (optv[i].shortk) free(optv[i].shortk);
+      if ((optv[i].type==SITTER_CFGTYPE_STR)&&optv[i]._str.v) free(optv[i]._str.v);
+      optc--;
+      memmove(optv+i,optv+i+1,sizeof(Option)*(optc-i));
+      return;
+    }
   }
 }
 

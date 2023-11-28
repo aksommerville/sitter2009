@@ -66,7 +66,8 @@ public:
        double getOption_float(const char *k) const;
          bool getOption_bool (const char *k) const;
          
-  void removeInputOptions();
+  void removeInputOptions();//XXX
+  void removeOption(const char *k);
   
   void addOption(const char *k,const char *shortk,int type,...); // varg=(v[,lo,hi])
   
