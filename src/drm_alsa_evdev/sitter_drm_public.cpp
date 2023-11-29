@@ -45,7 +45,7 @@ void sitter_drm_quit(struct sitter_drm *driver) {
 /* Init.
  */
 
-struct sitter_drm *sitter_drm_init() {
+struct sitter_drm *sitter_drm_init(const char *device) {
   struct sitter_drm *driver=(struct sitter_drm*)calloc(1,sizeof(struct sitter_drm));
   if (!driver) return 0;
   
@@ -59,7 +59,7 @@ struct sitter_drm *sitter_drm_init() {
   }
   
   if (
-    (sitter_drm_open_file(driver)<0)||
+    (sitter_drm_open_file(driver,device)<0)||
     (sitter_drm_configure(driver)<0)||
     (sitter_drm_init_gx(driver)<0)||
   0) {

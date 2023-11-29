@@ -113,8 +113,6 @@ int sitter_alsa_init(
     (snd_pcm_hw_params(sitter_alsa.alsa,sitter_alsa.hwparams)<0)
   ) return -1;
   
-  fprintf(stderr,"ALSA rate=%d chanc=%d\n",rate,chanc);
-  
   if (snd_pcm_nonblock(sitter_alsa.alsa,0)<0) return -1;
   if (snd_pcm_prepare(sitter_alsa.alsa)<0) return -1;
 

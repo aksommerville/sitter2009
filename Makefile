@@ -21,7 +21,11 @@ IMAGE_CONVERTER:=$(BINDIR)/imgcvt
 IMAGE_CONVERTER_SOURCE:=$(SRCDIR)/sitter_image_converter.cpp
 
 #ARCHS:=linux wii win32
-ARCHS:=linuxsdl linuxdrm
+ifneq (,$(strip $(wildcard /usr/include/SDL)))
+  ARCHS:=linuxsdl linuxdrm
+else
+  ARCHS:=linuxdrm
+endif
 all:processed_data_files $(addprefix arch_,$(ARCHS))
 
 ###############################################################################
@@ -57,6 +61,12 @@ LDFLAGS_linuxdrm:=
 LDLIBS_linuxdrm:=-ldrm -lEGL -lgbm -lGL -lasound -lpthread -lz
 APPEXTRA_linuxdrm:=LICENSE README INSTALL
 $(DATADIR_linuxdrm)/%:$(BINDATADIR)/%|all_data_dirs;@cp $< $@
+
+ifneq (,$(strip $(filter linuxsdl,$(ARCHS))))
+  run:$(APP_linuxsdl);$(APP_linuxsdl)
+else ifneq (,$(strip $(filter linuxdrm,$(ARCHS))))
+  run:$(APP_linuxdrm);$(APP_linuxdrm)
+endif
 
 # windows. only useful if you're building from linux with GCC for i586-mingw32msvc (ubuntu provides this)
 DST_win32:=win32
@@ -187,14 +197,16 @@ $(foreach A,$(ARCHS),$(eval $(call ARCH_RULES,$A)))
 IMAGE_CONVERTER_OBJ:=$(patsubst $(SRCDIR)%.cpp,$(BINDIR)%.o,$(IMAGE_CONVERTER_SOURCE))
 ifneq (,$(strip $(filter linuxsdl,$(ARCHS))))
   SITTEROBJ:=$(filter-out $(BINDIR)/sitter_main.linuxsdl.o,$(OBJFILES_linuxsdl))
-else ifneq (,$(strip $(filter linuxdrm,$(ARCHS)))
+  IMGCVT_LDPOST:=-lSDL -lGL
+else ifneq (,$(strip $(filter linuxdrm,$(ARCHS))))
   SITTEROBJ:=$(filter-out $(BINDIR)/sitter_main.linuxdrm.o,$(OBJFILES_linuxdrm))
+  IMGCVT_LDPOST:=-lpthread -lasound -ldrm -lgbm -lEGL -lGL
 else
   $(error Please update Makefile. Need some app code in imgcvt, must call out architecture)
 endif
 $(BINDIR)/%.o:$(SRCDIR)/%.cpp|$(BINDIR);@echo $@ ; g++ -c -MMD -O2 $(SRCINCLUDE) -o $@ $< -DSITTER_LITTLE_ENDIAN
 $(IMAGE_CONVERTER):$(IMAGE_CONVERTER_OBJ) $(SITTEROBJ) |$(dir $(IMAGE_CONVERTER));@echo $(IMAGE_CONVERTER) ; \
-  g++ -o $(IMAGE_CONVERTER) $(IMAGE_CONVERTER_OBJ) $(SITTEROBJ) -lSDL -lGL -lz
+  g++ -o $(IMAGE_CONVERTER) $(IMAGE_CONVERTER_OBJ) $(SITTEROBJ) $(IMGCVT_LDPOST) -lz
 -include $(IMAGE_CONVERTER_OBJ:.o=.d)
 
 ###############################################################################

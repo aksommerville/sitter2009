@@ -90,6 +90,7 @@ Game::Game(Configuration *cfg):cfg(cfg) {
   grp_alwaysempty=new SpriteGroup(this);
   
   int w,h,videoflags=0;
+  const char *videodevice=cfg->getOption_str("video-device");
   if (cfg->getOption_bool("fullscreen")) {
     w=cfg->getOption_int("fswidth");
     h=cfg->getOption_int("fsheight");
@@ -99,14 +100,13 @@ Game::Game(Configuration *cfg):cfg(cfg) {
     w=cfg->getOption_int("winwidth");
     h=cfg->getOption_int("winheight");
   }
-  video=new VideoManager(this,w,h,videoflags);
+  video=new VideoManager(this,w,h,videoflags,videodevice);
   video->spr_vis=grp_vis;
   
   input=new InputManager(this);
   input->reconfigure();
   if (cfg->getOption_bool("audio")) audio=new AudioManager(this);
   else audio=new DummyAudioManager(this);
-  
   openMainMenu();
   
   clocktexid=video->loadTexture("andyfont.png");

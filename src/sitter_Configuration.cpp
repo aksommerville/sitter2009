@@ -119,6 +119,7 @@ void Configuration::setDefaults() {
     addOption("fssmart",   "", SITTER_CFGTYPE_BOOL,  1); // check available fullscreen dimensions first (i strongly recommend true)
     addOption("winwidth",  "", SITTER_CFGTYPE_INT, 800,1,99999); // screen width, windowed
     addOption("winheight", "", SITTER_CFGTYPE_INT, 576,1,99999); // screen height, windowed
+    addOption("video-device","",SITTER_CFGTYPE_STR,"/dev/dri/card0"); // drm only
   #endif
   addOption("tex-filter","",SITTER_CFGTYPE_INT,0,0,2); // linear texture filter, 0=auto 1=never 2=always
   

@@ -50,7 +50,7 @@
  * init / kill
  *****************************************************************************/
  
-VideoManager::VideoManager(Game *game,int w,int h,int flags):game(game) {
+VideoManager::VideoManager(Game *game,int w,int h,int flags,const char *device):game(game) {
 
   spr_vis=NULL;
   menuv=NULL; menuc=menua=0;
@@ -59,7 +59,7 @@ VideoManager::VideoManager(Game *game,int w,int h,int flags):game(game) {
   scalebuf=NULL; scalebuflen=0;
   
   #if defined(SITTER_LINUX_DRM)
-    if (!(drm=sitter_drm_init())) sitter_throw(Error,"sitter_drm_init failed");
+    if (!(drm=sitter_drm_init(device))) sitter_throw(Error,"sitter_drm_init failed");
     w=sitter_drm_get_width(drm);
     h=sitter_drm_get_height(drm);
   #else

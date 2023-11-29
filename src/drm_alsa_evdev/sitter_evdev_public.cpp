@@ -269,8 +269,12 @@ static int sitter_evdev_try_open(const char *path) {
     }
     device->buttonc=my_device->buttonc;
     memcpy(device->buttonv,my_device->buttonv,sizeof(struct sitter_evdev_button)*my_device->buttonc);
+  } else if (!memcmp(device->name,"vc4-",4)) { // ignore some HDMI fake devices
+    sitter_evdev_drop_device(device);
+    return -1;
   } else {
     fprintf(stderr,"JOYSTICK: %04x:%04x: %s\n",device->vid,device->pid,device->name);
+    
     device->last_map_usage=0;
     int code=0;
     for (code=0;code<ABS_CNT;code++) {

@@ -9,7 +9,7 @@ struct sitter_drm;
 
 void sitter_drm_quit(struct sitter_drm *drm);
 
-struct sitter_drm *sitter_drm_init();
+struct sitter_drm *sitter_drm_init(const char *device);
 
 /* Drain, then draw, then swap.
  * We pause for vsync during drain.

@@ -3,12 +3,9 @@
 /* Open device file.
  */
  
-int sitter_drm_open_file(struct sitter_drm *driver) {
+int sitter_drm_open_file(struct sitter_drm *driver,const char *device_path) {
 
-  //TODO we now may have a poller -- driver->delegate.poller. Register the file there, and don't poll on our own.
-
-  //TODO allow user to configure, somehow
-  const char *device_path="/dev/dri/card0";
+  if (!device_path||!device_path[0]) device_path="/dev/dri/card0";
   
   if ((driver->fd=open(device_path,O_RDWR))<0) {
     fprintf(stderr,"%s: %m\n",device_path);

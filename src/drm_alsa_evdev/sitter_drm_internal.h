@@ -49,7 +49,7 @@ struct sitter_drm {
   EGLSurface eglsurface;
 };
 
-int sitter_drm_open_file(struct sitter_drm *driver);
+int sitter_drm_open_file(struct sitter_drm *driver,const char *path);
 int sitter_drm_configure(struct sitter_drm *driver);
 int sitter_drm_init_gx(struct sitter_drm *driver);
 

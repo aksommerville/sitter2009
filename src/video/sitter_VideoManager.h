@@ -72,7 +72,7 @@ public:
   Menu **menuv; int menuc,menua; // own list, not menus; draw in order, ie menuv[menuc-1] is on top
   bool highscore_dirty;
 
-  VideoManager(Game *game,int w,int h,int flags);
+  VideoManager(Game *game,int w,int h,int flags,const char *device);
   ~VideoManager();
   
   void reconfigure();

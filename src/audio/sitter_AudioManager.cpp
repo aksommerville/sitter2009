@@ -91,7 +91,7 @@ static void sitter_audio_callback(AudioManager *audio,int16_t *dst,int len) {
  
 AudioManager::AudioManager(Game *game,int samplechanc):game(game) {
   chanv=NULL; chanc=chana=0;
-  mixbuf=NULL;
+  mixbuf=NULL; mixbufa=0;
   chbuf=NULL;
   song=NULL;
   
