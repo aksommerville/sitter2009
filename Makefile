@@ -185,7 +185,13 @@ $(foreach A,$(ARCHS),$(eval $(call ARCH_RULES,$A)))
 # image converter
 
 IMAGE_CONVERTER_OBJ:=$(patsubst $(SRCDIR)%.cpp,$(BINDIR)%.o,$(IMAGE_CONVERTER_SOURCE))
-SITTEROBJ:=$(filter-out $(BINDIR)/sitter_main.linuxsdl.o,$(OBJFILES_linuxsdl))
+ifneq (,$(strip $(filter linuxsdl,$(ARCHS))))
+  SITTEROBJ:=$(filter-out $(BINDIR)/sitter_main.linuxsdl.o,$(OBJFILES_linuxsdl))
+else ifneq (,$(strip $(filter linuxdrm,$(ARCHS)))
+  SITTEROBJ:=$(filter-out $(BINDIR)/sitter_main.linuxdrm.o,$(OBJFILES_linuxdrm))
+else
+  $(error Please update Makefile. Need some app code in imgcvt, must call out architecture)
+endif
 $(BINDIR)/%.o:$(SRCDIR)/%.cpp|$(BINDIR);@echo $@ ; g++ -c -MMD -O2 $(SRCINCLUDE) -o $@ $< -DSITTER_LITTLE_ENDIAN
 $(IMAGE_CONVERTER):$(IMAGE_CONVERTER_OBJ) $(SITTEROBJ) |$(dir $(IMAGE_CONVERTER));@echo $(IMAGE_CONVERTER) ; \
   g++ -o $(IMAGE_CONVERTER) $(IMAGE_CONVERTER_OBJ) $(SITTEROBJ) -lSDL -lGL -lz
