@@ -17,7 +17,7 @@ void sitter_drm_quit(struct sitter_drm *driver) {
     struct pollfd pollfd={.fd=driver->fd,.events=POLLIN|POLLERR|POLLHUP};
     if (poll(&pollfd,1,500)>0) {
       char dummy[64];
-      read(driver->fd,dummy,sizeof(dummy));
+      int alsodummy=read(driver->fd,dummy,sizeof(dummy));
     }
   }
   
