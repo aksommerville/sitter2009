@@ -97,6 +97,7 @@ AudioManager::AudioManager(Game *game,int samplechanc):game(game) {
   
   #ifdef SITTER_LINUX_DRM
     if (sitter_alsa_init(
+      "hw:0,0",//TODO should be configurable at command line
       SITTER_AUDIO_FREQUENCY,2,
       sitter_audio_callback,this
     )<0) sitter_throw(Error,"sitter_alsa_init failed");

@@ -11,6 +11,7 @@ class AudioManager;
 void sitter_alsa_quit();
 
 int sitter_alsa_init(
+  const char *device,
   int rate,int chanc,
   void (*cb)(AudioManager *audio,int16_t *v,int len_bytes),
   AudioManager *audio

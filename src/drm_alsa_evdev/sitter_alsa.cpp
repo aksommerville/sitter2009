@@ -6,7 +6,7 @@ extern "C" {
 #include <stdio.h>
 }
 
-#define SITTER_ALSA_BUFFER_SIZE 1024
+#define SITTER_ALSA_BUFFER_SIZE 2048
 
 /* Globals.
  */
@@ -88,6 +88,7 @@ void sitter_alsa_quit() {
  */
 
 int sitter_alsa_init(
+  const char *device,
   int rate,int chanc,
   void (*cb)(AudioManager *audio,int16_t *v,int c),
   AudioManager *audio
@@ -100,7 +101,6 @@ int sitter_alsa_init(
   
   snd_pcm_format_t format=SND_PCM_FORMAT_S16;
   int samplesize=2;
-  const char *device="default";
   if (
     (snd_pcm_open(&sitter_alsa.alsa,device,SND_PCM_STREAM_PLAYBACK,0)<0)||
     (snd_pcm_hw_params_malloc(&sitter_alsa.hwparams)<0)||
