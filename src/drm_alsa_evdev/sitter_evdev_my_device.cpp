@@ -157,6 +157,24 @@ static const struct sitter_my_device sitter_my_device_vcs={
   },
 };
 
+/* Atari VCS (the stick one).
+ */
+static const struct sitter_my_device sitter_my_device_ataristick={
+  .vid=0x3250,
+  .pid=0x1001,
+  .nickname="Atari Stick",
+  .buttonc=6,
+  .buttonv={
+    //{EV_KEY,139,SITTER_USAGE_,0,0,1,INT_MAX},//hamburger
+    {EV_KEY,158,SITTER_USAGE_PAUSE,0,0,1,INT_MAX},//back
+    {EV_KEY,172,SITTER_USAGE_PAUSE,0,0,1,INT_MAX},//atari
+    {EV_KEY,304,SITTER_USAGE_JUMP,0,0,1,INT_MAX},//primary
+    {EV_KEY,305,SITTER_USAGE_PICKUP,0,0,1,INT_MAX},//secondary
+    {EV_ABS,16,SITTER_USAGE_X,0,0,-1,1},
+    {EV_ABS,17,SITTER_USAGE_Y,0,0,-1,1},
+  },
+};
+
 /* 8bitdo Pro 2.
  */
 static const struct sitter_my_device sitter_my_device_pro2={
@@ -207,6 +225,7 @@ static const struct sitter_my_device *sitter_my_devicev[]={
   &sitter_my_device_ps2,
   &sitter_my_device_powera,
   &sitter_my_device_vcs,
+  &sitter_my_device_ataristick,
   &sitter_my_device_pro2,
 };
 
