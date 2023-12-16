@@ -209,6 +209,11 @@ static int sitter_evdev_try_open(const char *path) {
     close(fd);
     return 0;
   }
+  // Same for my mouse...
+  if ((id.vendor==0x09da)&&(id.product==0x0006)) {
+    close(fd);
+    return 0;
+  }
   
   // Try to grab it. If this fails, whatever.
   if (ioctl(fd,EVIOCGRAB,1)<0) ;
