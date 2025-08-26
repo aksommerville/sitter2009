@@ -219,6 +219,26 @@ static const struct sitter_my_device sitter_my_device_pro2={
   },
 };
 
+/* Xinmotek (arcade cabinet).
+ */
+static const struct sitter_my_device sitter_my_device_xinmotek={
+  .vid=0x16c0,
+  .pid=0x05e1,
+  .nickname="Xinmotek",
+  .buttonc=6,
+  .buttonv={
+     {EV_ABS,0,SITTER_USAGE_X,128,0,63,191},
+     {EV_ABS,1,SITTER_USAGE_Y,128,0,63,191},
+     {EV_KEY,289,SITTER_USAGE_JUMP,0,0,1,INT_MAX}, // green
+     {EV_KEY,290,SITTER_USAGE_PICKUP,0,0,1,INT_MAX}, // blue
+     //{EV_KEY,291,SITTER_USAGE_,0,0,1,INT_MAX}, // red
+     //{EV_KEY,292,SITTER_USAGE_,0,0,1,INT_MAX}, // yellow
+     //{EV_KEY,293,SITTER_USAGE_,0,0,1,INT_MAX}, // upper white
+     {EV_KEY,294,SITTER_USAGE_PAUSE,0,0,1,INT_MAX}, // lower white
+     {EV_KEY,298,SITTER_USAGE_QUIT,0,0,1,INT_MAX}, // front panel
+  },
+};
+
 static const struct sitter_my_device *sitter_my_devicev[]={
   &sitter_my_device_xbox,
   &sitter_my_device_zelda,
@@ -227,6 +247,7 @@ static const struct sitter_my_device *sitter_my_devicev[]={
   &sitter_my_device_vcs,
   &sitter_my_device_ataristick,
   &sitter_my_device_pro2,
+  &sitter_my_device_xinmotek,
 };
 
 const struct sitter_my_device *sitter_check_my_device(int vid,int pid) {

@@ -53,9 +53,9 @@ struct sitter_drm *sitter_drm_init(const char *device) {
   driver->crtcunset=1;
 
   if (!drmAvailable()) {
-    fprintf(stderr,"DRM not available.\n");
-    sitter_drm_quit(driver);
-    return 0;
+    fprintf(stderr,"DRM not available. Proceeding anyway.\n");
+    //sitter_drm_quit(driver);
+    //return 0;
   }
   
   if (

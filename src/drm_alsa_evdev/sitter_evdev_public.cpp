@@ -483,7 +483,8 @@ static int sitter_evdev_read_device(SDL_Event *dst,struct sitter_evdev_device *d
         case SITTER_USAGE_UP:
         case SITTER_USAGE_JUMP:
         case SITTER_USAGE_PICKUP:
-        case SITTER_USAGE_PAUSE: {
+        case SITTER_USAGE_PAUSE:
+        case SITTER_USAGE_QUIT: {
             int dstvalue=((event->value>=button->srclo)&&(event->value<=button->srchi))?1:0;
             if (dstvalue==button->dstvalue) continue;
             button->dstvalue=dstvalue;
@@ -556,6 +557,10 @@ static int sitter_evdev_read_device(SDL_Event *dst,struct sitter_evdev_device *d
               case SITTER_USAGE_PAUSE: if (dstvalue) {
                   //stateless
                   sitter_evdev_inmgr->pushEvent(InputEvent(SITTER_EVT_BTNDOWN,SITTER_BTN_MENU,1)); 
+                } break;
+                
+              case SITTER_USAGE_QUIT: if (dstvalue) {
+                  sitter_evdev_inmgr->pushEvent(InputEvent(SITTER_EVT_BTNDOWN,SITTER_BTN_QUIT,1));
                 } break;
             }
           } break;

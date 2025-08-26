@@ -27,6 +27,7 @@
 #define SITTER_USAGE_JUMP       7
 #define SITTER_USAGE_PICKUP     8
 #define SITTER_USAGE_PAUSE      9
+#define SITTER_USAGE_QUIT      10 /* Hard instant quit, only using for the arcade cabinet. */
 
 struct sitter_evdev_button {
   int type,code;
