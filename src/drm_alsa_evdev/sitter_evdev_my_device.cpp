@@ -227,8 +227,6 @@ static const struct sitter_my_device sitter_my_device_xinmotek={
   .nickname="Xinmotek",
   .buttonc=6,
   .buttonv={
-     {EV_ABS,0,SITTER_USAGE_X,128,0,63,191},
-     {EV_ABS,1,SITTER_USAGE_Y,128,0,63,191},
      {EV_KEY,289,SITTER_USAGE_JUMP,0,0,1,INT_MAX}, // green
      {EV_KEY,290,SITTER_USAGE_PICKUP,0,0,1,INT_MAX}, // blue
      //{EV_KEY,291,SITTER_USAGE_,0,0,1,INT_MAX}, // red
@@ -236,6 +234,8 @@ static const struct sitter_my_device sitter_my_device_xinmotek={
      //{EV_KEY,293,SITTER_USAGE_,0,0,1,INT_MAX}, // upper white
      {EV_KEY,294,SITTER_USAGE_PAUSE,0,0,1,INT_MAX}, // lower white
      {EV_KEY,298,SITTER_USAGE_QUIT,0,0,1,INT_MAX}, // front panel
+     {EV_ABS,0,SITTER_USAGE_X,128,0,63,191},
+     {EV_ABS,1,SITTER_USAGE_Y,128,0,63,191},
   },
 };
 
